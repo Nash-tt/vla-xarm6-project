@@ -1,0 +1,11 @@
+# 瘦客户端依赖 —— 只要这三个，不需要 torch / lerobot / CUDA
+#
+# 版本下限不是随手写的：
+#   grpcio>=1.73.1    services_pb2_grpc.py:8 写死 GRPC_GENERATED_VERSION='1.73.1'，
+#                     生成文件会主动检查并拒绝更旧的 grpc 运行时
+#   protobuf>=6.31.0  services_pb2.py:11 调 ValidateProtobufRuntimeVersion(6,31,0)，
+#                     运行时比生成代码旧会直接抛错
+#   numpy             state / 动作向量
+grpcio>=1.73.1
+protobuf>=6.31.0
+numpy>=1.24

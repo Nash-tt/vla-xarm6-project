@@ -1,0 +1,32 @@
+# ---- 训练产物（体积大，不入库）----
+runs/
+smolvla_ultrasound_scan_20k/
+smolvla_ultrasound_20k_tol1ms/
+pi0_ultrasound_lora/run1/
+pi0_ultrasound_lora/smoke*/
+smoke_test_*/
+
+# ---- 日志 ----
+*.log
+
+# ---- 数据集与模型权重（本地另存）----
+data/
+*.safetensors
+*.mp4
+*.parquet
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# ---- 编辑器 / 系统 ----
+.vscode/
+.idea/
+.DS_Store
+
+# ---- 本地覆盖 ----
+.env
+*.local

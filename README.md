@@ -39,9 +39,10 @@
 │   ├── serve.py                 # policy server（含两处上游缺陷的修复）
 │   ├── run_train.sh             # π0 + LoRA 微调
 │   ├── replay_client.py         # 本机回放测试客户端
-│   ├── remote/                  # 部署于工控机的轻量客户端
-│   │   ├── remote_client.py
+│   ├── remote/                  # 工控机侧的轻量客户端；仓库里唯一的传输层
+│   │   ├── remote_client.py     # 真机客户端也 import 这一份
 │   │   ├── netprobe.py          # 链路带宽与延迟探测
+│   │   ├── test_remote_client_timing.py
 │   │   └── services_pb2*.py     # proto 生成的 gRPC 桩（免装 grpcio-tools）
 │   └── measure_inference.py     # 推理耗时测量
 ├── run_train_smolvla_scan.sh    # SmolVLA 微调（扫描段数据集）
@@ -49,7 +50,7 @@
 ├── robot/                       # 工控机侧代码副本（见 robot/README.md）
 │   ├── my_code/                 # 示教点采集 → 轨迹生成 → 三路同步采集 → 对齐 → 建集
 │   ├── realsense_collector/     # 独立 RealSense RGB-D 采集器
-│   └── real_robot/              # 真机远程策略客户端（默认影子模式）
+│   └── real_robot/              # 真机远程策略客户端（默认影子模式；不含传输层）
 └── docs/                        # 问题记录，见下表
 ```
 

@@ -151,15 +151,27 @@ pickle 记录的是**类路径 + 类名**。瘦客户端没有 LeRobot，
 
 ### 客户端参数
 
-瘦客户端（`remote/remote_client.py`）与真机客户端（`real_robot_client.py`）
-共用同一套协议，差异只在下列两项：
+真机客户端（`real_robot_client.py`）**复用**瘦客户端的传输层
+（`remote/remote_client.py`，仓库里唯一一份）：它按模块 `import remote_client`，
+并 `class RealRobotClient(transport.LeanRobotClient)`。两者共用同一套默认值：
 
-| 参数 | 瘦客户端 | 真机客户端 | 说明 |
-|---|---|---|---|
-| `--fps` | 15 | 15 | |
-| `--actions-per-chunk` | 50 | 50 | |
-| `--chunk-size-threshold` | **0.5** | **0.9** | 真机更保守：队列保持在 90% 以上才不发新观测 |
-| `--wire` | 必须 `numpy` | `torch` | |
+| 参数 | 默认 | 说明 |
+|---|---|---|
+| `--fps` | `15` | |
+| `--actions-per-chunk` | `50` | |
+| `--chunk-size-threshold` | `0.9` | 队列剩余低于该比例才发新观测 |
+| `--initial-action-timeout` | `120.0` | 启动动作时钟前等首个动作块的秒数 |
+| `--warmup-chunks` | `2` | 时钟启动前额外预热几次推理 |
+| `--grpc-compression` | `none` | `gzip` **无损**压缩观测上行，不改模型输入像素 |
+
+真机客户端另有一批专属参数（`--robot-ip`、`--max-force-n` 等），见
+`robot/real_robot/README_REAL_ROBOT.md`；安全阈值见本篇第五节。
+
+唯一由**部署方式**决定的差异是 `--wire`：
+
+| | 瘦客户端（链路测试） | 真机客户端 |
+|---|---|---|
+| `--wire` | 必须 `numpy` | `torch` |
 
 ### 三个必须遵守的协议行为
 

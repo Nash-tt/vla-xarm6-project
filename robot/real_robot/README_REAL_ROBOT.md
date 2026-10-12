@@ -8,6 +8,17 @@
 执行模式不会自动移动到起始位姿。机械臂必须先由已经验证过的定位流程放到
 本次任务的起始位姿。
 
+## 0. 依赖的两个模块
+
+本文件 `import remote_client`（传输层）与 `export_ultrasound_images`（超声解码）：
+
+- `remote_client.py` —— 本仓库里**只有一份**，位于 `pi0_ultrasound_lora/remote/`；
+- `export_ultrasound_images.py` —— 在 `<xArm-SDK>\my_code\`。
+
+所以**本目录不能单独跑**：必须把整个 `pi0_ultrasound_lora/remote/` 与本文件放进
+同一个目录（工控机上即 `<deploy-dir>`）。若只拷贝本文件，会在 `import remote_client`
+处直接失败——这是有意为之，避免静默加载到一份旧副本。详见 `robot/README.md` 第 3.3 节。
+
 ## 1. 启动PhaseLink原始包输出
 
 先在PowerShell创建本次实时目录，再从同一个PowerShell启动带VLA记录器的

@@ -44,7 +44,7 @@ import threading
 import time
 import types
 from dataclasses import dataclass, field
-from queue import Queue
+from queue import Empty, Full, Queue
 
 # 让 `import services_pb2` 能找到同目录下那两个文件（从别的目录跑也成立）
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -321,11 +321,20 @@ class LeanRobotClient:
         self.action_chunk_size = args.actions_per_chunk
         self.action_queue_size = []
         self.received_chunks = 0
+        self.received_chunk_times = []
+        self.first_actions_event = threading.Event()
         self.rx_error = None
+        self.observation_error = None
+        self.observation_send_latencies = []
+        self.observation_queue = Queue(maxsize=1)
+        self.observation_pending = threading.Event()
         self.must_go = threading.Event()
         self.must_go.set()
         self.shutdown_event = threading.Event()
-        self.start_barrier = threading.Barrier(2)
+        # The receive and control loops no longer need to start together.
+        # Receiving starts first so the initial action chunk can be primed
+        # before the fixed-rate action clock begins.
+        self.start_barrier = threading.Barrier(1)
         self.channel = None
         self.stub = None
 
@@ -338,8 +347,16 @@ class LeanRobotClient:
         from lerobot.async_inference.helpers import RemotePolicyConfig
         import services_pb2_grpc
 
+        compression_name = getattr(self.args, "grpc_compression", "none")
+        compression = (
+            grpc.Compression.Gzip
+            if compression_name == "gzip"
+            else grpc.Compression.NoCompression
+        )
         self.channel = grpc.insecure_channel(
-            self.args.server, grpc_channel_options(f"{self.environment_dt:.4f}s")
+            self.args.server,
+            grpc_channel_options(f"{self.environment_dt:.4f}s"),
+            compression=compression,
         )
         try:
             grpc.channel_ready_future(self.channel).result(timeout=self.args.connect_timeout)
@@ -415,10 +432,15 @@ class LeanRobotClient:
 
     def _pop_action(self):
         with self.action_queue_lock:
-            return self.action_queue.get()
+            try:
+                return self.action_queue.get_nowait()
+            except Empty:
+                return None
 
     def pop_action(self):
         timed = self._pop_action()
+        if timed is None:
+            return None
         action = timed.get_action()  # numpy 数组（服务端 --wire numpy）
         if not self.exhausted.is_set():
             self.performed.append(np.asarray(action, dtype=np.float64))
@@ -443,7 +465,11 @@ class LeanRobotClient:
                 self.action_queue_size.append(self.action_queue.qsize())
             time.sleep(max(0, self.environment_dt - (time.perf_counter() - t0)))
 
-    def control_loop_observation(self):
+    def control_loop_observation(self, force_must_go=False):
+        """把观测交给独立发送线程，绝不阻塞动作时钟。"""
+        if self.observation_pending.is_set():
+            return False
+
         from lerobot.async_inference.helpers import TimedObservation
 
         raw = self.get_observation()
@@ -456,10 +482,43 @@ class LeanRobotClient:
             timestep=max(latest, 0),
         )
         with self.action_queue_lock:
-            obs.must_go = self.must_go.is_set() and self.action_queue.empty()
-        self.send_observation(obs)
-        if obs.must_go:
-            self.must_go.clear()
+            obs.must_go = force_must_go or (
+                self.must_go.is_set() and self.action_queue.empty()
+            )
+        self.observation_pending.set()
+        try:
+            self.observation_queue.put_nowait(obs)
+            return True
+        except Full:
+            self.observation_pending.clear()
+            return False
+
+    def send_observations_loop(self):
+        """在动作控制线程之外执行可能很慢的 gRPC 上传。"""
+        while self.running or not self.observation_queue.empty():
+            try:
+                obs = self.observation_queue.get(timeout=0.1)
+            except Empty:
+                continue
+
+            started = time.perf_counter()
+            try:
+                if not self.send_observation(obs):
+                    self.observation_error = "SendObservations RPC failed"
+                    self.shutdown_event.set()
+                    return
+                self.observation_send_latencies.append(
+                    time.perf_counter() - started
+                )
+                if obs.must_go:
+                    self.must_go.clear()
+            except Exception as exc:
+                self.observation_error = f"{type(exc).__name__}: {exc}"
+                self.shutdown_event.set()
+                return
+            finally:
+                self.observation_pending.clear()
+                self.observation_queue.task_done()
 
     def receive_actions(self):
         self.start_barrier.wait()
@@ -504,6 +563,7 @@ class LeanRobotClient:
                     ))
             with self.action_queue_lock:
                 self.action_queue = future
+                has_future_actions = not self.action_queue.empty()
 
             # 关键：上游 robot_client.py:337 就在这里 set。
             # 它不是"优化"，是**活性机制**：队列一空，本次 obs 必带 must_go=True，
@@ -513,6 +573,9 @@ class LeanRobotClient:
             # 静默丢弃，表现为"发了一堆观测，动作再也不来"。
             self.must_go.set()
             self.received_chunks += 1
+            self.received_chunk_times.append(time.perf_counter())
+            if has_future_actions:
+                self.first_actions_event.set()
 
 
 # ══════════════════════════════════════════════════════════════════════════
@@ -526,12 +589,27 @@ def main():
                     help="**服务端本地**的 ckpt 路径，服务端拿它加载模型")
     ap.add_argument("--fps", type=int, default=15)
     ap.add_argument("--actions-per-chunk", type=int, default=50)
-    ap.add_argument("--chunk-size-threshold", type=float, default=0.5)
+    ap.add_argument("--chunk-size-threshold", type=float, default=0.9,
+                    help="动作队列剩余比例低于该值时提前请求下一批")
+    ap.add_argument("--initial-action-timeout", type=float, default=120.0,
+                    help="开始15Hz动作时钟前等待首个动作chunk的秒数")
+    ap.add_argument("--warmup-chunks", type=int, default=2,
+                    help="首chunk之后、动作时钟启动前额外预热的推理次数")
     ap.add_argument("--policy-device", default="cuda", help="仅作占位，服务端强制用 --device")
     ap.add_argument("--connect-timeout", type=float, default=10.0)
     ap.add_argument("--timeout", type=float, default=600, help="回放总超时")
+    ap.add_argument(
+        "--grpc-compression",
+        choices=("none", "gzip"),
+        default="none",
+        help="观测上传使用的 gRPC 压缩；gzip 无损，不改变模型输入像素",
+    )
     ap.add_argument("--dry-run", action="store_true", help="只加载包并打印，不连网")
     args = ap.parse_args()
+    if not 0.0 <= args.chunk_size_threshold <= 1.0:
+        ap.error("--chunk-size-threshold 必须位于 [0, 1]")
+    if args.warmup_chunks < 0:
+        ap.error("--warmup-chunks 不能为负数")
 
     print("=" * 74)
     print("远程推理测试：本机(serve.py) <- gRPC -> 这台机器（无 torch / 无 lerobot）")
@@ -551,6 +629,7 @@ def main():
         return
 
     print(f"\n【2】连接 {args.server}")
+    print(f"  gRPC压缩 : {args.grpc_compression}")
     client = LeanRobotClient(args, b)
     t0 = time.perf_counter()
     if not client.start():
@@ -566,7 +645,46 @@ def main():
 
     print(f"\n【3】回放 {b.n} 帧 @ {args.fps}fps（chunk={args.actions_per_chunk}）")
     rx = threading.Thread(target=client.receive_actions, daemon=True)
+    obs_tx = threading.Thread(target=client.send_observations_loop, daemon=True)
     rx.start()
+    obs_tx.start()
+    if not client.control_loop_observation():
+        raise RuntimeError("首个观测未能进入异步发送队列")
+    if not client.first_actions_event.wait(timeout=args.initial_action_timeout):
+        client.stop()
+        rx.join(timeout=5)
+        obs_tx.join(timeout=5)
+        raise RuntimeError(
+            f"等待首个动作chunk超过 {args.initial_action_timeout:.1f}s；"
+            "检查服务端推理日志"
+        )
+
+    for warmup_index in range(args.warmup_chunks):
+        deadline = time.perf_counter() + args.initial_action_timeout
+        while client.observation_pending.is_set() and time.perf_counter() < deadline:
+            time.sleep(0.01)
+        target_chunks = client.received_chunks + 1
+        client.must_go.set()
+        if not client.control_loop_observation(force_must_go=True):
+            raise RuntimeError("预热观测未能进入异步发送队列")
+        while client.received_chunks < target_chunks and time.perf_counter() < deadline:
+            time.sleep(0.02)
+        if client.received_chunks < target_chunks:
+            client.stop()
+            rx.join(timeout=5)
+            obs_tx.join(timeout=5)
+            raise RuntimeError(
+                f"第 {warmup_index + 1} 次额外预热超过 "
+                f"{args.initial_action_timeout:.1f}s"
+            )
+        print(
+            f"  推理预热 {warmup_index + 1}/{args.warmup_chunks} 完成，"
+            f"累计chunk {client.received_chunks}"
+        )
+
+    with client.action_queue_lock:
+        initial_queue_size = client.action_queue.qsize()
+    print(f"  首个动作chunk已预装：队列 {initial_queue_size}，现在启动固定频率时钟")
     ctl = threading.Thread(target=client.control_loop, daemon=True)
     ctl.start()
 
@@ -594,9 +712,11 @@ def main():
     client.shutdown_event.set()
     ctl.join(timeout=3)
     rx.join(timeout=3)
+    obs_tx.join(timeout=3)
     client.stop()
     ctl.join(timeout=5)
     rx.join(timeout=5)
+    obs_tx.join(timeout=5)
     print(f"  回放结束，耗时 {wall:.1f}s")
 
     report(client, b, wall, args)
@@ -637,6 +757,22 @@ def report(client, b: Bundle, wall: float, args):
     print(f"  实测执行频率 : {len(performed) / max(wall, 1e-9):.2f} Hz（目标 {args.fps}）")
     print(f"  平均发观测率 : {len(client.observed_frames) / max(wall, 1e-9):.2f} Hz"
           f"（≠帧率，队列低才发，设计如此）")
+    if client.observation_send_latencies:
+        latencies = np.asarray(client.observation_send_latencies)
+        print(
+            f"  观测 RPC 延迟 : 平均 {latencies.mean():.2f}s "
+            f"最大 {latencies.max():.2f}s（已与动作时钟解耦）"
+        )
+    if client.observation_error:
+        print(f"  观测发送错误  : {client.observation_error}")
+    if len(client.received_chunk_times) >= 2:
+        chunk_intervals = np.diff(client.received_chunk_times)
+        print(
+            f"  chunk到达间隔  : 平均 {chunk_intervals.mean():.2f}s "
+            f"最大 {chunk_intervals.max():.2f}s；"
+            f"50步@{args.fps}Hz最多覆盖 "
+            f"{args.actions_per_chunk / args.fps:.2f}s"
+        )
     q = client.action_queue_size
     if q:
         # 队列深度贴着 0 说明推理跟不上；这里的每一帧都要过网络，比本机回放更吃时序
@@ -662,7 +798,7 @@ def report(client, b: Bundle, wall: float, args):
 
     print("\n【7】判定")
     if mae < 3.0:
-        print(f"  ✅ 远程链路通，且契约对齐。MAE {mae:.3f}，与离线 {OFFLINE_MAE:.3f} 同量级")
+        print(f"  [OK] 远程链路通，且契约对齐。MAE {mae:.3f}，与离线 {OFFLINE_MAE:.3f} 同量级")
         print("     这条链路上唯一和真机不同的就是图像预先缩过了（224→224 恒等，无偏差）")
     elif mae < 10.0:
         print(f"  ⚠️  MAE {mae:.3f} 明显高于离线 {OFFLINE_MAE:.3f} —— 链路通但口径有偏")

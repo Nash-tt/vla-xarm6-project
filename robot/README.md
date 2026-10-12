@@ -156,12 +156,15 @@ Windows 电脑上单独跑（见其 `README.md` 的部署一节）。它与 `my_
 | 文件 | 作用 |
 |---|---|
 | `real_robot_client.py` | 入口。安全包络、三个数据源、控制环、参数解析 |
-| `remote_client.py` | 传输层（gRPC 瘦客户端）与 pickle 桩；被上一行按模块引用 |
 | `services_pb2*.py` | proto 生成的桩，免装 `grpcio-tools` |
 | `config/training_ultrasound_metadata.json` | 超声解码配置（波束数、动态范围等），从训练数据复制而来 |
 | `README_REAL_ROBOT.md` | 运行步骤：起 PhaseLink → `--validate-only` → 影子测试 → 有界真机测试 |
-| `test_real_robot_client.py` / `test_remote_client_timing.py` | 单测 |
+| `test_real_robot_client.py` | 单测（14 项） |
 | `requirements.txt` | 只有 grpcio / protobuf / numpy，不需要 torch 与 CUDA |
+
+> **本目录不含传输层。** `real_robot_client.py` 第 45 行 `import remote_client`，
+> 那一份在 [`pi0_ultrasound_lora/remote/remote_client.py`](../pi0_ultrasound_lora/remote/remote_client.py)
+> ——仓库里唯一一份。理由与取法见第 3.3 节。
 
 ### 3.1 安全阈值审阅（入库前的必要一步）
 
@@ -192,7 +195,7 @@ Windows 电脑上单独跑（见其 `README.md` 的部署一节）。它与 `my_
 
 ### 3.2 与工控机原件的差异
 
-脱敏替换如下，逐条可核对，涉及 3 个文件：
+脱敏替换如下，逐条可核对：
 
 | 原件 | 此处 |
 |---|---|
@@ -202,38 +205,75 @@ Windows 电脑上单独跑（见其 `README.md` 的部署一节）。它与 `my_
 | `E:\dt_vla_data`（数据集根） | `<data-root>` |
 | GPU 机 Tailscale 地址（`100.127.*`） | `100.64.0.1` |
 | xArm 局域网地址（`192.168.1.*`） | `192.168.1.100` |
-| `/home/lab301/vla-training/pi0_ultrasound_lora/run1` | `pi0_ultrasound_lora/run1` |
 
-`requirements.txt`、两个 `services_pb2*.py`、两个测试文件**逐字节相同，未改动**。
+命中 `real_robot_client.py`（5 处）与 `README_REAL_ROBOT.md`（14 处）。
+`requirements.txt`、两个 `services_pb2*.py`、`test_real_robot_client.py` **逐字节相同，未改动**。
 
-### 3.3 传输层已经分叉（重要）
+> 早先这张表里另有一行 `/home/lab301/vla-training/pi0_ultrasound_lora/run1`，
+> 那处替换只出现在 `remote_client.py`（它的 `DEFAULT_CKPT`）里；
+> 该文件已移出本目录，见 3.3，此行随之撤销。
 
-本仓库里有两份 `remote_client.py`，**它们不等价**：
+### 3.3 传输层只有一份，在服务端那一侧
 
-| 位置 | 行数 | `LeanRobotClient` |
+`real_robot_client.py` 第 45 行 `import remote_client as transport`，第 607 行
+`class RealRobotClient(transport.LeanRobotClient)`。它对传输层的依赖不止一处：
+
+| 依赖 | 用处 |
+|---|---|
+| `send_observations_loop()` | 独立线程上行观测，不阻塞动作时钟 |
+| `control_loop_observation(force_must_go=True)` | 预热时强制发一次；**返回值**表示入队是否成功 |
+| `first_actions_event` | 等首个动作块落地，之后才启动固定频率时钟 |
+| `observation_error` | 发送线程的异常，主循环转成 `SafetyStop`（第 722 行） |
+| `observation_send_latencies` | 影子测试要看的观测上行延迟 |
+
+**这份传输层在本仓库里只存在于
+[`pi0_ultrasound_lora/remote/remote_client.py`](../pi0_ultrasound_lora/remote/remote_client.py)。**
+
+原来树里有两份，且已经分叉：
+
+| 位置 | 行数 | 状况 |
 |---|---|---|
-| `robot/real_robot/remote_client.py`（工控机 `D:\pi0_remote`，部署版） | 815 | 有 `send_observations_loop()`；`control_loop_observation(force_must_go=False)` 带参数 |
-| `pi0_ultrasound_lora/remote/remote_client.py`（本仓库原有的链路测试版） | 679 | 两者都没有 |
+| 工控机 `D:\pi0_remote\remote_client.py`（部署版） | 815 | 上表五项齐全 |
+| 工控机 `Desktop\pi0_remote\`，即树里原来的 `pi0_ultrasound_lora/remote/` | 679 | **五项全缺** |
 
-`real_robot_client.py` 两处都用到（起观测发送线程、等首个动作块），**因此它只能配 815 那版跑**。
 拿 679 那版替换会直接报属性错误——不会静默出错，但也不会有人预料到。
+现按 815 版统一：**内容移入 `pi0_ultrasound_lora/remote/`，本目录不再保留副本**；
+配套的 `test_remote_client_timing.py` 也一并移过去（它测的正是上表前两项）。
 
-两份的分叉是真实的：工控机上 `Desktop\pi0_remote\` 与 `D:\pi0_remote\` 本来就各有一份。
-本次收录保持原样、不改动已有文件，只在此记录这一约束。
-统一两份是[文档 10](../docs/10-collaboration.md) 第七节的待办；那时须以 815 版为准，
-并把 `pi0_ultrasound_lora/remote/README.md` 与本文档一并更新。
+> **工控机不需要改动。** 取回两份原件与仓库副本逐行 diff 核对过：
+> `D:\pi0_remote\` 那份与仓库里这份**只差 3 行，且全是脱敏**——docstring 里的示例
+> 地址、`DEFAULT_CKPT` 的绝对路径前缀、`--server` 默认值；`Desktop\pi0_remote\`
+> 那份与仓库里原来的 679 行版也只差同样 3 行。
+> 即：**真机部署目录里跑的本来就是这一版**，这次统一只动仓库，不动机器。
 
-**另一份（679 行）在哪里、为什么不在本目录下。** 它就是工控机上的 `Desktop\pi0_remote\`，
-而**仓库里已经有了**——即 `pi0_ultrasound_lora/remote/`。已逐文件核对：
-`requirements.txt` 与两个 `services_pb2*.py` 逐字节相同，`remote_client.py` 只差 3 行脱敏，
-`README.md` 只差主机名与地址替换。所以这里**不再收第二份**：
-同一个文件在树里出现两次，只会各自漂移。它留在服务端那一侧也更合理——
-服务端 `serve.py` 就在隔壁，而两者是必须同版本的一对。
+选服务端那一侧而不是本目录，有两个理由：`serve.py` 就在隔壁，而**客户端与 `serve.py`
+是必须同版本的一对**；且 `remote/` 整个目录本来就是要拷到工控机的部署单元。
+
+**本目录因此不再自包含。** 单独拿 `robot/real_robot/` 去跑会停在 `import remote_client`
+——这是想要的行为，不会静默加载到一份旧副本。工控机上把整个
+`pi0_ultrasound_lora/remote/` 放进 `<deploy-dir>` 即可，`real_robot_client.py` 就在它旁边。
+
+在仓库里跑真机单测，要把两处补进 `PYTHONPATH`：
+
+```bash
+cd robot/real_robot
+PYTHONPATH=<repo>/pi0_ultrasound_lora/remote:<repo>/robot/my_code \
+  python -m unittest test_real_robot_client     # 14 项
+```
+
+第二处是因为 `real_robot_client.py` 还 `from export_ultrasound_images import ...`，
+而它按 `XARM_SDK_ROOT` 去找 `<xArm-SDK>/my_code`。在工控机上这条路径本来就在，
+**只有在本仓库里需要手工补**——这个缺依赖在我改动之前就存在，不是本次引入的。
+
+`services_pb2*.py` 由 proto 生成，**两台机器必须同版本**：版本不一致时不会报错，
+只会握手失败。
 
 ### 3.4 没收录的
 
 | 项 | 原因 |
 |---|---|
+| `remote_client.py`（部署版，815 行） | **已收入本仓库，但不在此目录**——移到了 `pi0_ultrasound_lora/remote/`，见 3.3 |
+| `test_remote_client_timing.py` | 同上，随传输层一起移动 |
 | `README.md`（部署目录里那份） | 与 `pi0_remote/README.md` **逐字节相同**，是链路测试的说明；本仓库已有其脱敏版 `pi0_ultrasound_lora/remote/README.md`，不重复收录 |
 | `*.20261011_before_rate_limit.bak` | 加限速模式前的备份，现行版本已包含该改动 |
 | `live_ultrasound_current/`、`real_runs/`、`replay_bundle.npz`、`.venv/` | 运行产物与依赖 |

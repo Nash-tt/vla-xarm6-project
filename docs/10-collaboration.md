@@ -38,22 +38,27 @@ vla-ultrasound/
 
 - `my_code/` —— 两处替换
 - `realsense_collector/` —— 零脱敏，逐字节相同
-- `real_robot/` —— 七处替换；**其传输层与 `pi0_ultrasound_lora/remote/` 已分叉，
-  两者不等价**，见 `robot/README.md` 第 3.3 节
+- `real_robot/` —— 两处替换；**不含传输层**，`remote_client.py` 统一放在
+  `pi0_ultrasound_lora/remote/`，见 `robot/README.md` 第 3.3 节
 
-### `pi0_remote` 与 `pi0_ultrasound_lora/remote/` 是**同一套东西**，不是两端
+### 传输层只有一份：`pi0_ultrasound_lora/remote/`
 
-工控机上的 `Desktop\pi0_remote\` 就是本仓库的 `pi0_ultrasound_lora/remote/`——
-都是链路测试用的**瘦客户端**，服务端是 `pi0_ultrasound_lora/serve.py`。
-已逐文件核对：`requirements.txt` 与两个 `services_pb2*.py` **逐字节相同**；
-`remote_client.py` 只差 3 行脱敏，`README.md` 只差主机名与地址替换。
-因此**不再另收一份到 `robot/` 下**，避免同一文件出现两个会各自漂移的副本。
+工控机上有两个目录都放着瘦客户端——`Desktop\pi0_remote\`（链路测试）与
+`D:\pi0_remote\`（真机部署）——各有一份 `remote_client.py`，**已经分叉**：
+部署版 815 行，测试版 679 行；后者缺 `send_observations_loop()`、
+`control_loop_observation(force_must_go=…)` 等五项，而真机客户端这五项全用得上。
+
+按 815 版统一后，仓库里**只保留一份**，即 `pi0_ultrasound_lora/remote/remote_client.py`；
+`robot/real_robot/` 不再保留副本，配套的 `test_remote_client_timing.py` 也移到该处。
+放在服务端这一侧，是因为 `serve.py` 就在隔壁，而**客户端与 `serve.py` 是必须同版本的一对**；
+且 `remote/` 整个目录本来就是要拷到工控机的部署单元。
+工控机上那两个目录都应从仓库的这一份刷新。
 
 `pi0_ultrasound_lora/remote/` 里的 `netprobe.py` 是**本机侧**工具（工控机上没有），
 用于探测链路带宽与延迟，因此留在服务端那一侧。
 
-**必须同版本的是客户端与 `serve.py`**，不是上面这两个目录：
-`services_pb2*.py` 由 proto 生成，两端版本不一致时**不会报错，只会握手失败**。
+**`services_pb2*.py` 由 proto 生成，两台机器必须同版本**——
+版本不一致时**不会报错，只会握手失败**。
 
 ---
 
@@ -200,12 +205,14 @@ git diff --cached | grep -nE 'sk-|hf_|ghp_|AKIA|PRIVATE KEY|password|api_key|tok
       —— 与原件逐字节相同，无需消毒
 - [x] `real_robot_client.py` 入库前**逐行审阅**，确认安全阈值是通用保守值
       —— 已审完并收入 `robot/real_robot/`，结论与逐条依据见 `robot/README.md` 第 3.1 节
-- [ ] **统一两份 `remote_client.py`**。它们已经分叉，不等价：
-      `robot/real_robot/`（部署版，815 行）比 `pi0_ultrasound_lora/remote/`（679 行）
-      多出 `send_observations_loop()` 与 `control_loop_observation(force_must_go=...)`，
-      而 `real_robot_client.py` 两者都用，**只能配 815 那版跑**。
-      合并时以 815 版为准，同步更新 `pi0_ultrasound_lora/remote/README.md`；
-      另需注明 `services_pb2*.py` 两侧必须同版本——版本不一致不会报错、只会握手失败
+- [x] **统一两份 `remote_client.py`**
+      —— 按 815 行那版为准，内容移入 `pi0_ultrasound_lora/remote/`（仓库里唯一一份），
+      `robot/real_robot/` 的副本删除、`test_remote_client_timing.py` 一并移过去；
+      两份 README 与[文档 09](09-interface-contract.md) 的客户端参数表同步更新。
+      `services_pb2*.py` 两侧必须同版本已在此注明。
+      **工控机不动**：取样核对表明 `D:\pi0_remote\` 那份与仓库里这份只差 3 行脱敏，
+      真机部署目录里跑的本来就是这一版；只有 `Desktop\pi0_remote\` 那份链路测试用的
+      仍是旧的 679 行，要与仓库一致时才需覆盖
 - [x] 收入 `pi0_remote/`（链路测试的瘦客户端）
       —— **本就已在仓库里**，即 `pi0_ultrasound_lora/remote/`，逐文件核对为同一套东西，
       未另收副本；见本文件第二节

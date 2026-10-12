@@ -1,46 +1,46 @@
-# 08 · 如果改用 openpi 训练，现有的客户端/服务端还能沿用吗？
+# 08 · 改用 openpi 时现有客户端与服务端的可复用性评估
 
-这是一个**评估结论**，不是一次实施记录。结论先行：
+本篇是一份**评估结论**，而非实施记录。结论先行：
 
-| 层面 | 能否沿用 | 说明 |
+| 层面 | 可复用性 | 说明 |
 |---|---|---|
-| 数据格式 | ❌ **硬阻塞** | 已实测：openpi 依赖的 lerobot 0.1.0 只认 v2.1 |
-| 服务端（serve.py） | ❌ 不能直接用 | openpi 没有 gRPC，也没有 LeRobot 的 `PolicyServer` 桥 |
-| 客户端（remote/） | ⚠️ 有条件下能 | 写一层适配器可以救活整条链路 |
-| 训练脚本 | ✅ 基本无关 | 但数据集仓库要能用 |
+| 数据格式 | 否，**硬阻塞** | 已实测：openpi 依赖的 lerobot 0.1.0 仅支持 v2.1 |
+| 服务端（`serve.py`） | 否，不可直接使用 | openpi 无 gRPC，亦无 LeRobot `PolicyServer` 桥接 |
+| 客户端（`remote/`） | 有条件可行 | 编写一层适配器可保留整条链路 |
+| 训练脚本 | 基本无关 | 但数据集需可用 |
 
-以下每条都标了**实测**还是**推断**。
+以下各项均标注**实测**或**推断**。
 
 ---
 
-## 一、数据侧：真正的硬阻塞（**已实测**）
+## 一、数据侧：硬阻塞（**已实测**）
 
-openpi 自带的 `.venv` 里 pin 的 `lerobot` 是 **0.1.0**，
-它的 `CODEBASE_VERSION = "v2.1"`，要求数据集里有：
+openpi 自带的 `.venv` 中 pin 的 `lerobot` 为 **0.1.0**，
+其 `CODEBASE_VERSION = "v2.1"`，要求数据集包含：
 
 ```
 meta/tasks.jsonl
 meta/episodes.jsonl
 ```
 
-而我们的自采数据集是 **v3.0** 格式，目录长这样：
+而本项目的自采数据集为 **v3.0** 格式：
 
 ```
 meta/tasks.parquet
 meta/episodes/chunk-000/file-000.parquet
 ```
 
-实测结果（用 openpi 的 `.venv` 里的 lerobot 去读我们的 v3.0 数据集）：
+实测结果（以 openpi 的 `.venv` 中的 lerobot 读取 v3.0 数据集）：
 
 | 函数 | 结果 |
 |---|---|
-| `load_info` | ✅ 通过 |
-| `load_tasks` | ❌ 失败 |
-| `load_episodes` | ❌ 失败 |
+| `load_info` | 通过 |
+| `load_tasks` | 失败 |
+| `load_episodes` | 失败 |
 
-### ⚠️ 这个失败会伪装成网络错误
+### 该失败会伪装为网络错误
 
-`LeRobotDatasetMetadata.load_metadata()` 外面套着：
+`LeRobotDatasetMetadata.load_metadata()` 的外层为：
 
 ```python
 try:
@@ -50,71 +50,69 @@ except (FileNotFoundError, NotADirectoryError):
     get_safe_version(...) → pull_from_repo(...)
 ```
 
-所以「文件不存在」这个真实原因会被**吞掉**，转成一次 hub 拉取尝试，
-最终报出来的是一个 `OfflineModeIsEnabled` 之类的**网络错误**。
+因此「文件不存在」这一真实原因被吞掉，转为一次 hub 拉取尝试，
+最终报出 `OfflineModeIsEnabled` 一类的**网络错误**。
 
-我们第一版测试就因此被误导，以为是对不上 HF。**排查时要把这几步拆开单独调。**
+初次测试即因此被误导。**排查时应将这几步拆分后单独调用。**
 
-另外：**版本检查只 `warn` 不报错**，所以你不会在一开始就被拦住，
-而是一路走到某个深处才炸。
+另需注意：**版本检查仅 `warn`，不报错**，
+因此不会在起始处被拦截，而是在较深处才暴露。
 
 ---
 
-## 二、服务端：openpi 没有 gRPC
+## 二、服务端：openpi 不含 gRPC
 
-全仓库 grep `async_inference` / `PolicyServer` / `grpc` —— **零命中**。
-openpi 的 `Policy` 继承的是它自己的 `openpi_client.base_policy.BasePolicy`，
-和 LeRobot 的 `PolicyServer` 没有任何关系。
+全仓库检索 `async_inference` / `PolicyServer` / `grpc`——**零命中**。
+openpi 的 `Policy` 继承自其自身的 `openpi_client.base_policy.BasePolicy`，
+与 LeRobot 的 `PolicyServer` 无任何关系。
 
-openpi 用的是 **WebSocket**（默认端口 8000）：
+openpi 使用 **WebSocket**（默认端口 8000）：
 
-- 连接后服务端先推一个**元数据帧**
-- 线格式是 **msgpack + 自定义 ndarray 编码**
-  （`b"__ndarray__"` / `b"data"` / `b"dtype"` / `b"shape"`），
-  **不是 pickle，也不是 protobuf**
+- 连接后服务端先推送一个**元数据帧**
+- 线格式为 **msgpack + 自定义 ndarray 编码**
+  （`b"__ndarray__"` / `b"data"` / `b"dtype"` / `b"shape"`），**非 pickle，亦非 protobuf**
 - 响应形如 `{"actions": (H, D), "server_timing": ..., "policy_timing": ...}`
-- 健康检查是 `GET /healthz`
+- 健康检查为 `GET /healthz`
 
-### 两条路
+### 两条路径
 
-**方案 A：写适配器（推荐，改动小）**
-把 openpi 的 policy 包装成一个 LeRobot `Policy`，
-这样 `serve.py` 和**整个客户端链路原样存活**。
+**方案 A：编写适配器（推荐，改动较小）。**
+将 openpi 的 policy 包装为 LeRobot `Policy`，
+`serve.py` 与**整条客户端链路可原样保留**。
 
-**方案 B：改用 openpi 的 websocket**
-要重写客户端（wire 格式、握手、帧结构全变），
-并且**控制循环的归属要反过来**——openpi 由客户端负责开环回放。
+**方案 B：改用 openpi 的 websocket。**
+需重写客户端（线格式、握手、帧结构均不同），
+且**控制循环的归属需反转**——openpi 由客户端负责开环回放。
 
-### ⚠️ 双归一化陷阱
+### 双归一化陷阱
 
-openpi 内部有 `Normalize`（它会按 `x.shape[-1]` 把 stats 切片），
-LeRobot 侧有 pre/post processor。**只能有一边做归一化。**
+openpi 内部含 `Normalize`（按 `x.shape[-1]` 对 stats 切片），
+LeRobot 侧含 pre/post processor。**仅允许一侧执行归一化。**
 
-搞错了是**静默的**——不报错，只是结果不对。
-上方案 A 的时候这是第一个要确认的事。
+选错是**静默的**——不报错，仅结果不正确。
+采用方案 A 时，这是首要确认项。
 
 ---
 
-## 三、框架无关的风险
+## 三、与框架无关的风险
 
-### roll 口径（同样要紧）
+### roll 口径（同样适用）
 
-openpi 的 `compute_norm_stats.py` 也只算 `keys = ["state", "actions"]`，
-roll 的展开/wrap 问题**一模一样存在**。见[文档 03](03-roll-angle.md)。
+openpi 的 `compute_norm_stats.py` 亦仅计算 `keys = ["state", "actions"]`，
+roll 的展开/wrap 问题**同样存在**。见[文档 03](03-roll-angle.md)。
 
 ### float32 累加器（**推断，未实测**）
 
-openpi 的 `RunningStats`（`src/openpi/shared/normalize.py`）用的是和 LeRobot
+openpi 的 `RunningStats`（`src/openpi/shared/normalize.py`）使用与 LeRobot
 **完全相同的公式**：
 
 ```python
 std = sqrt(mean_of_squares - mean**2)
 ```
 
-所以[文档 02-B](02-stats-json.md) 里那个 float32 相消问题**很可能同样存在**。
+因此[文档 02-B](02-stats-json.md) 中的 float32 抵消问题**很可能同样存在**。
 
-> **但这一条没有实测过**，只是一个基于公式相同的推断。
-> 真要换 openpi，这个值得花十分钟量一下。
+> 该条**未实测**，仅为公式相同所导出的推断。若确定改用 openpi，此项值得实测确认。
 
 ---
 
@@ -127,37 +125,37 @@ action_dim: int = 32
 action_horizon: int = 50
 ```
 
-它通过 `PadStatesAndActions` 把动作**补齐到 32 维**——
-但这个 transform **只在 PI0 / PI05 的 `model_transforms` 里注册**。
-**pi0-FAST 不做 padding**，这点要注意。
+其通过 `PadStatesAndActions` 将动作**补齐至 32 维**，
+但该 transform **仅在 PI0 / PI05 的 `model_transforms` 中注册**，
+**pi0-FAST 不做 padding**，此点需注意。
 
-我们的动作是 **6 维**，所以不管走哪条路，**都必须写自定义的 Inputs / Outputs**
-把 6 维映射到模型期望的形状。最近的模板是 `examples/ur5/`。
+本项目动作为 **6 维**，因此无论采用哪条路径，
+**均须编写自定义 Inputs / Outputs** 将 6 维映射至模型期望的形状。
+最接近的模板是 `examples/ur5/`。
 
 ---
 
-## 五、时间集成：openpi 里也没有
+## 五、时间集成：openpi 中亦不存在
 
-全仓库 grep，**openpi 里不存在 temporal ensembling**。
-开环回放由客户端负责（`ActionChunkBroker` 按 `self._cur_step` 取动作）。
+全仓库检索，**openpi 中不存在 temporal ensembling**。
+开环回放由客户端负责（`ActionChunkBroker` 依 `self._cur_step` 取动作）。
 
-这一点和 LeRobot 的 `async_inference` 是一致的（那边也没有）。
-**所以这不是选框架的理由，两边都得自己写。**
+这与 LeRobot 的 `async_inference` 一致，
+**因此不构成选择框架的理由，两侧均需自行实现。**
 
 ---
 
 ## 六、建议
 
-**LeRobot 本身已经有 π0**，我们这条链路（数据 → 训练 → 服务端 → 远程客户端）已经通了。
+**LeRobot 自身已包含 π0**，且本项目链路（数据 → 训练 → 服务端 → 远程客户端）已打通。
 
-换 openpi 的成本，粗估**约两周**的适配量：
-自定义 Inputs/Outputs、数据格式转换（v3.0 → v2.1，或改 openpi 侧的 lerobot 版本）、
+改用 openpi 的成本粗估**约两周**适配工作量：
+自定义 Inputs/Outputs、数据格式转换（v3.0 → v2.1，或调整 openpi 侧的 lerobot 版本）、
 websocket 或适配器、归一化归属的确认。
 
-**所以换的理由需要非常具体。** 如果只是「openpi 是官方实现」，
-那不足以支撑两周——我们的链路已经在跑，而 openpi 那边要重新踩一遍
-数据格式和归一化的坑。
+**因此切换的理由需要足够具体。** 若仅为「openpi 是官方实现」，
+不足以支撑两周投入——现有链路已在运行，而 openpi 侧需重新处理数据格式与归一化问题。
 
-反过来，如果目标是 pi0-FAST、或者 openpi 的某个特定 checkpoint / 训练配方，
-那这笔投入是值得的，但**建议先花半天做数据侧的可行性验证**
-（打开本文第一节说的那个「伪装成网络错误」的坑），再决定。
+反之，若目标是 pi0-FAST，或 openpi 的特定 checkpoint / 训练配方，
+则该投入是合理的；但**建议先以半天时间完成数据侧可行性验证**
+（需注意第一节所述「伪装为网络错误」的陷阱），再行决定。

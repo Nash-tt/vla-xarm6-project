@@ -27,15 +27,17 @@
 vla-ultrasound/
 ├── tools/                  # GPU 侧：裁剪、统计量重算、校验
 ├── pi0_ultrasound_lora/    # GPU 侧：serve.py、训练脚本、远程客户端
-├── robot/                  # 工控机侧：采集与控制（脱敏副本）
-│   └── my_code/            #   采集主链路与数据集构建  ← 已入库
+├── robot/                  # 工控机侧：采集与控制（副本）
+│   ├── my_code/            #   采集主链路与数据集构建
+│   └── realsense_collector/#   独立 RealSense RGB-D 采集器
 └── docs/                   # 两侧共同维护
 ```
 
 `robot/my_code/` 已入库，是现行采集链路的 13 个模块与对应测试，
 与工控机原件的差异只有两处替换（见 `robot/README.md` 第一节）。
+`robot/realsense_collector/` 已入库，与原件逐字节相同（零脱敏）。
 
-`robot/realsense/`、`robot/real_robot/` 尚未入库，见第七节。
+`robot/real_robot/` 尚未入库，见第七节。
 
 **注意 `pi0_remote` 与 `pi0_ultrasound_lora/remote/` 是同一套东西的两端**
 （服务端 / 客户端）。合并到一处时必须注明「两侧必须同版本」——
@@ -185,7 +187,8 @@ git diff --cached | grep -nE 'sk-|hf_|ghp_|AKIA|PRIVATE KEY|password|api_key|tok
 - [ ] 收入 `robot/remote_client.py`（`pi0_remote/`，即链路测试的瘦客户端），
       并与 `pi0_ultrasound_lora/remote/` 合并到一处；合并时必须注明「两侧同版本」，
       `services_pb2*.py` 版本不一致不会报错、只会握手失败
-- [ ] 收入 `robot/realsense_collector/`（独立 RealSense 采集器）
+- [x] 收入 `robot/realsense_collector/`（独立 RealSense 采集器）
+      —— 与原件逐字节相同，无需消毒
 - [ ] `real_robot_client.py` 入库前**逐行审阅**，确认安全阈值
       是通用保守值而非实验室特定值；另需收录其依赖的 `export_ultrasound_images.py`
       （已随 `my_code` 入库）与 `remote_client.py`

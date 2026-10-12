@@ -1,12 +1,21 @@
 # 工控机侧代码
 
-采集与真机控制运行在工控机上（Win10），本文档与 `my_code/` 是那批代码的**脱敏副本**，
+采集与真机控制运行在工控机上（Win10），本文档与下面两个子目录是那批代码的**副本**，
 收入本仓库是为了让「数据是怎么采出来的」有据可查。
 
 > **这里是副本，不是工作版本。** 真正的代码在工控机上，改这里不会影响采集。
 > 两侧的对应关系与回溯方式见[文档 10](../docs/10-collaboration.md)。
 
-## 一、与工控机原件的差异
+| 子目录 | 内容 | 脱敏 |
+|---|---|---|
+| `my_code/` | 采集链路：示教点 → 轨迹 → 三路同步采集 → 对齐 → 建集 | 两处替换（见第一节） |
+| `realsense_collector/` | 独立 RealSense RGB-D 采集器，可脱离机器人单独用 | **零脱敏**，与原件逐字节相同 |
+
+---
+
+## 一、`my_code/`
+
+### 1.1 与工控机原件的差异
 
 仅两处替换，逐条可核对：
 
@@ -20,7 +29,7 @@
 > 与[文档 10](../docs/10-collaboration.md) 第四节同理：替换表的左列只写**可检索的前缀**，
 > 不写全值——否则清单自己就成了泄漏点。用 `grep -rn '192.168.1.'` 照样能定位。
 
-## 二、采集链路
+### 1.2 采集链路
 
 拟合轨迹运行阶段（当前流程）的完整顺序：
 
@@ -55,7 +64,7 @@ run_fitted_trajectory_vla_sync.py
 build_vla_training_dataset.py ── export_ultrasound_images.py
 ```
 
-### 各文件
+#### 各文件
 
 | 文件 | 作用 |
 |---|---|
@@ -75,7 +84,7 @@ build_vla_training_dataset.py ── export_ultrasound_images.py
 
 `test_*.py` 与上表模块一一对应，覆盖对齐、建集、轨迹生成、录像、同步采集与伺服扫描。
 
-## 三、没收录的
+### 1.3 没收录的
 
 | 文件 | 原因 |
 |---|---|
@@ -94,7 +103,7 @@ build_vla_training_dataset.py ── export_ultrasound_images.py
 `setup_vla_env.ps1` 末尾的提示指向 `run_scan_collect_vla_realsense.py`（上面已排除的那个）；
 建 venv 与装依赖的部分仍然适用。
 
-## 四、运行前提
+### 1.4 运行前提
 
 - xArm Python SDK（`setup_vla_env.ps1` 从本地项目安装）
 - RealSense：`requirements_vla_realsense.txt`
@@ -103,3 +112,35 @@ build_vla_training_dataset.py ── export_ultrasound_images.py
 - 超声解码调色板与动态范围来自 PhaseLink 侧；若改动需同步[文档 09](../docs/09-interface-contract.md)
 
 采集产物（图像目录、原始包、示教点 JSON）均不入库。
+
+---
+
+## 二、`realsense_collector/`
+
+独立 RealSense RGB-D 采集器，**不含机器人控制、不含超声**，可以在一台只接了相机的
+Windows 电脑上单独跑（见其 `README.md` 的部署一节）。它与 `my_code/` 里的
+`realsense_sync_recorder.py` 是两条不同的路：后者被三路同步采集器当模块调用，
+只出帧流；前者是独立可执行的完整采集器，自带 episode 目录结构、相机内参与元数据。
+
+**与工控机原件逐字节相同，未做任何替换。** 已核对：无写死的 IP、主机名、用户路径或
+相机序列号（`--serial` 缺省时取第一台设备）。
+
+| 文件 | 作用 |
+|---|---|
+| `collector.py` | 采集主程序：彩色 + 对齐后的深度、`frames.jsonl`、`metadata.json`、`summary.json`；可选 `--action-file` 同步机器人动作 |
+| `realsense_viewer.py` | 只预览不落盘的取景工具 |
+| `setup_windows.ps1` | 建 `.venv`、装固定版本依赖、列出已连接相机；会校验 Python 3.11/3.12 与 64 位 |
+| `run_collector.ps1` | 调用 `.venv` 里的解释器启动采集 |
+| `requirements.txt` | numpy / opencv-python / pyrealsense2 |
+| `README.md` | 部署步骤、参数、输出格式，以及 `Frame didn't arrive` 的处置 |
+
+输出为每帧一个 JPEG（彩色）+ 一个 uint16 PNG（深度），米制深度按
+`depth_m = depth_png * depth_scale_meters_per_unit` 还原，比例记在 `metadata.json`。
+
+> 其 `README.md` 里的示例指令（"把红色方块放入盒子"）与动作格式
+> （`joint_position` + `gripper`）是通用的抓取任务示例，不是本项目的任务——
+> 这个采集器是跨任务复用的，未针对超声扫描改过。
+
+### 2.1 没收录的
+
+`.venv/`（依赖与字节码）。采集产物（`dataset/episode_*/`）不入库。

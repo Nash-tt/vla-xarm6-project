@@ -46,8 +46,9 @@
 │   └── measure_inference.py     # 推理耗时测量
 ├── run_train_smolvla_scan.sh    # SmolVLA 微调（扫描段数据集）
 ├── plot_pred_vs_demo.py         # 预测与示范对比图
-├── robot/                       # 工控机采集链路的脱敏副本（见 robot/README.md）
-│   └── my_code/                 # 示教点采集 → 轨迹生成 → 三路同步采集 → 对齐 → 建集
+├── robot/                       # 工控机侧代码副本（见 robot/README.md）
+│   ├── my_code/                 # 示教点采集 → 轨迹生成 → 三路同步采集 → 对齐 → 建集
+│   └── realsense_collector/     # 独立 RealSense RGB-D 采集器
 └── docs/                        # 问题记录，见下表
 ```
 

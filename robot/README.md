@@ -144,3 +144,92 @@ Windows 电脑上单独跑（见其 `README.md` 的部署一节）。它与 `my_
 ### 2.1 没收录的
 
 `.venv/`（依赖与字节码）。采集产物（`dataset/episode_*/`）不入库。
+
+---
+
+## 三、`real_robot/`
+
+真机远程策略客户端：连 xArm 读状态、读 RealSense 与 PhaseLink 原始包、把观测发给
+远端 policy、按动作块下发。**默认影子模式**——连真机、读传感器、调远端策略、只记录，
+不调用任何运动 API。
+
+| 文件 | 作用 |
+|---|---|
+| `real_robot_client.py` | 入口。安全包络、三个数据源、控制环、参数解析 |
+| `remote_client.py` | 传输层（gRPC 瘦客户端）与 pickle 桩；被上一行按模块引用 |
+| `services_pb2*.py` | proto 生成的桩，免装 `grpcio-tools` |
+| `config/training_ultrasound_metadata.json` | 超声解码配置（波束数、动态范围等），从训练数据复制而来 |
+| `README_REAL_ROBOT.md` | 运行步骤：起 PhaseLink → `--validate-only` → 影子测试 → 有界真机测试 |
+| `test_real_robot_client.py` / `test_remote_client_timing.py` | 单测 |
+| `requirements.txt` | 只有 grpcio / protobuf / numpy，不需要 torch 与 CUDA |
+
+### 3.1 安全阈值审阅（入库前的必要一步）
+
+[文档 10](../docs/10-collaboration.md) 第七节要求 `real_robot_client.py` 入库前逐行确认
+安全阈值是**通用保守值**而非本站点专用调参。已逐行读完，结论：**是通用保守值，可以入库。**
+依据如下（均为代码中的默认值，非文档转述）：
+
+| 性质 | 代码依据 |
+|---|---|
+| 两道闸门才能动 | `--execute` 与 `--confirm EXECUTE_REAL_XARM_POLICY` 必须同时给出，字符串精确匹配，否则 `parse_args` 直接 `parser.error` 退出 |
+| 不自动去起始位姿 | `prepare_execute()` 只读不写：查状态、查力传感器、`motion_enable`、`set_mode(1)`、`set_state(0)`，全程没有 `set_position` |
+| 单次运行有时长上限 | `--max-seconds` 默认 10.0 s |
+| 力/力矩有上限 | `--max-force-n` 40 N、`--max-torque-nm` 5 N·m，每次下发前用 `_require_healthy` 复查 |
+| 力传感器不能是坏的 | 读数全零即停止，除非显式 `--allow-zero-ft`——防止传感器失效后力检查被静默架空 |
+| 位置与姿态单步限幅 | 3 mm / 2°；目标距实际 TCP 另有 12 mm / 5° 上限 |
+| 起始位姿容差 | 8 mm / 5°，只在与参考轨迹比对时启用（需显式 `--safety-trajectory`） |
+| 控制器状态防护 | `state` 为 4/6 即停；5 仅在尚未下发任何目标时允许检视 |
+| 错误码即停 | `error_code`、`warn_code`、断联、SDK 返回非零一律 `SafetyStop` |
+| 异常/中断进停止态 | 任何异常或 Ctrl+C 都走 `stop_motion(emergency=True)` → `set_state(4)` + `set_mode(0)`，**不自动清错** |
+| 不重复旧动作 | 动作队列为空时 `pop_action` 返回 `None`，控制环等待；结构上就不会重放陈旧动作 |
+
+数值量级对一台挂探头的 6 轴机械臂是常见保守调试值（力 40 N、单步 3 mm/2°、
+跟踪误差 12 mm/5°），没有出现针对某次实验调过的痕迹，也没有发现被放宽的痕迹。
+
+唯一值得留意的是 `--queue-empty-stop` 默认为 `0.0`（关闭）。这不危险：队列空时
+不会重放旧动作，且断供本身会经 `rx_error` 触发停止，加上 `--max-seconds` 兜底。
+需要恢复该超时可显式传 `--queue-empty-stop 3.0`。
+
+### 3.2 与工控机原件的差异
+
+脱敏替换如下，逐条可核对，涉及 3 个文件：
+
+| 原件 | 此处 |
+|---|---|
+| `C:\Users\<用户名>\Desktop\develop_dt\Xarm_SDK_dt\xArm-Python-SDK-master` | `<xArm-SDK>` |
+| `C:\Users\<用户名>\Desktop\develop_dt\PAU_SDK - dt` | `<PAU_SDK>` |
+| `D:\pi0_remote`（部署目录） | `<deploy-dir>` |
+| `E:\dt_vla_data`（数据集根） | `<data-root>` |
+| GPU 机 Tailscale 地址（`100.127.*`） | `100.64.0.1` |
+| xArm 局域网地址（`192.168.1.*`） | `192.168.1.100` |
+| `/home/lab301/vla-training/pi0_ultrasound_lora/run1` | `pi0_ultrasound_lora/run1` |
+
+`requirements.txt`、两个 `services_pb2*.py`、两个测试文件**逐字节相同，未改动**。
+
+### 3.3 传输层已经分叉（重要）
+
+本仓库里有两份 `remote_client.py`，**它们不等价**：
+
+| 位置 | 行数 | `LeanRobotClient` |
+|---|---|---|
+| `robot/real_robot/remote_client.py`（工控机 `D:\pi0_remote`，部署版） | 815 | 有 `send_observations_loop()`；`control_loop_observation(force_must_go=False)` 带参数 |
+| `pi0_ultrasound_lora/remote/remote_client.py`（本仓库原有的链路测试版） | 679 | 两者都没有 |
+
+`real_robot_client.py` 两处都用到（起观测发送线程、等首个动作块），**因此它只能配 815 那版跑**。
+拿 679 那版替换会直接报属性错误——不会静默出错，但也不会有人预料到。
+
+两份的分叉是真实的：工控机上 `Desktop\pi0_remote\` 与 `D:\pi0_remote\` 本来就各有一份。
+本次收录保持原样、不改动已有文件，只在此记录这一约束。
+统一两份是[文档 10](../docs/10-collaboration.md) 第七节的待办；那时须以 815 版为准，
+并把 `pi0_ultrasound_lora/remote/README.md` 与本文档一并更新。
+
+### 3.4 没收录的
+
+| 项 | 原因 |
+|---|---|
+| `README.md`（部署目录里那份） | 与 `pi0_remote/README.md` **逐字节相同**，是链路测试的说明；本仓库已有其脱敏版 `pi0_ultrasound_lora/remote/README.md`，不重复收录 |
+| `*.20261011_before_rate_limit.bak` | 加限速模式前的备份，现行版本已包含该改动 |
+| `live_ultrasound_current/`、`real_runs/`、`replay_bundle.npz`、`.venv/` | 运行产物与依赖 |
+
+> **本目录不含数据集、示教点或轨迹文件。** `--safety-trajectory` 指向的参考轨迹
+> 属站点实测数据，需自行提供；不传该参数时走「直接执行策略目标」并仅靠实时限幅保护。

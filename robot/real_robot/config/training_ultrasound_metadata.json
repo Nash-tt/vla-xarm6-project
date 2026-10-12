@@ -1,0 +1,81 @@
+{
+    "applied_settings": {
+        "all_sdk_setters_accepted": true,
+        "array": {
+            "angle_max_deg": 0,
+            "angle_min_deg": 0,
+            "aperture": 16,
+            "beam_mode_enum": 0,
+            "element_step": 1,
+            "first_element": 1,
+            "focus_depth_mm": 0,
+            "focus_mode_enum": 0,
+            "last_element": 64,
+            "receive_channel": 1,
+            "scan_type_enum": 0,
+            "transmit_channel": 1,
+            "wave_type_enum": 0
+        },
+        "basic": {
+            "display_max_amplitude_percent": 800,
+            "frame_rate_per_beam_hz": 20,
+            "gain_db": 8,
+            "high_pass_enum": 0,
+            "low_pass_enum": 5,
+            "polarity_enum": 0,
+            "probe_frequency_mhz": 5,
+            "probe_pitch_mm": 0.6000000238418579,
+            "probe_primary_elements": 64,
+            "pulse_width_ns": 100,
+            "range_end_mm": 50,
+            "range_start_mm": 0,
+            "rectifier_enum": 1,
+            "sample_points": 1024,
+            "voltage_v": 50,
+            "wedge_enabled": true,
+            "wedge_velocity_m_s": 2330,
+            "wedge_x_sdk_mm": 85.5999984741211,
+            "wedge_z_mm": 0,
+            "workpiece_longitudinal_velocity_m_s": 3000,
+            "zero_position_ns": 1350
+        },
+        "gate_a": {
+            "enabled": true,
+            "end_mm": 47.11000061035156,
+            "measure_enum": 1,
+            "start_mm": 14.40999984741211,
+            "synchronization_enum": 0,
+            "synchronous_acquisition": false,
+            "threshold_percent": 11,
+            "threshold_sdk": 450.55999755859375,
+            "width_mm": 32.70000076293945
+        },
+        "group": 0,
+        "preset_name": "contact_scan_v1",
+        "snapshot_event": "start_scan_accepted",
+        "tcg": {
+            "enabled": true,
+            "points": [
+                {
+                    "depth_mm": 30,
+                    "gain_db": 5,
+                    "index": 1
+                },
+                {
+                    "depth_mm": 20,
+                    "gain_db": 7,
+                    "index": 2
+                }
+            ]
+        }
+    },
+    "binary_bytes": 261343584,
+    "closed_cleanly": true,
+    "device_timestamp_frequency_hz": 200000000,
+    "disk_writer_thread": true,
+    "index_file": "ultrasound_frames.jsonl",
+    "packet_count": 2754,
+    "packet_file": "ultrasound_packets.bin",
+    "schema": "phaselink_raw_capture_v2",
+    "tail_size_bytes": 32
+}

@@ -48,7 +48,8 @@
 ├── plot_pred_vs_demo.py         # 预测与示范对比图
 ├── robot/                       # 工控机侧代码副本（见 robot/README.md）
 │   ├── my_code/                 # 示教点采集 → 轨迹生成 → 三路同步采集 → 对齐 → 建集
-│   └── realsense_collector/     # 独立 RealSense RGB-D 采集器
+│   ├── realsense_collector/     # 独立 RealSense RGB-D 采集器
+│   └── real_robot/              # 真机远程策略客户端（默认影子模式）
 └── docs/                        # 问题记录，见下表
 ```
 
@@ -135,8 +136,8 @@ DATASET_ROOT=/data/vla/<裁剪版> ./run_train_smolvla_scan.sh
 - 三路同步采集链路：xArm 状态与下发目标、RealSense RGB-D、PhaseLink 超声原始包
   ——脱敏副本已收入 [`robot/my_code/`](robot/README.md)（现行采集链路的 13 个模块 + 对应测试）
 - 真机远程策略客户端：默认影子模式，具备力/力矩上限、单步限幅、跟踪误差约束与二次确认
-  ——**尚未并入本仓库**，见[文档 10](docs/10-collaboration.md) 待办：入库前需逐行确认阈值
-  是通用保守值而非本站点专用值
+  ——脱敏副本已收入 [`robot/real_robot/`](robot/README.md#三real_robot)；
+  入库前的安全阈值逐行审阅已完成，结论与依据记在该节 3.1
 
 **尚未完成**（详见[文档 06](docs/06-remote-client.md) 第七节）：
 

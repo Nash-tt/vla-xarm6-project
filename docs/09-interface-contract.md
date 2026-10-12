@@ -228,6 +228,34 @@ pickle 记录的是**类路径 + 类名**。瘦客户端没有 LeRobot，
 错误码、警告码、断联、SDK 返回非零一律停止；异常或 Ctrl+C 进入 xArm 停止状态，
 **不自动清错**。
 
+### 可选的限速模式（默认关闭）
+
+默认行为是**直接执行模型输出的绝对目标**。模型给出的目标可能距当前 TCP 很远，
+若希望把它摊成连续的小步笛卡尔伺服目标，显式启用：
+
+```powershell
+--rate-limited-policy --policy-linear-speed 2 --policy-angular-speed 1
+```
+
+| 参数 | 默认 | 含义 |
+|---|---|---|
+| `--rate-limited-policy` | 关 | 启用后按下表把绝对目标转成逐步伺服目标 |
+| `--policy-linear-speed` | 2 mm/s | 平移速度上限 |
+| `--policy-angular-speed` | 1 °/s | 转动速度上限 |
+
+15 Hz 下等效单步约 **0.133 mm / 0.067°**（按位姿向量范数计），不设累计行程上限，
+时长仍由 `--max-seconds` 约束。
+
+日志字段随之变化：`target_tcp_pose` 与 `raw_policy_target` 记**模型原值**，
+`commanded_tcp_pose` 记限速后**实际下发**（并通过安全检查）的值，
+`rate_limit` 记原始距离、实际步长与是否触发平移/转动限速。
+
+> 该模式**不关闭**任何上表的保护项——力/力矩、传感器时效、跟踪误差、单步限幅、
+> SDK 返回码与急停逻辑一律照旧生效。
+>
+> 引入于 2026-10-11（工控机侧 `D:\pi0_remote`，对应 `*.20261011_before_rate_limit.bak`）。
+> **尚未纳入发布树**，本文档先行记录。
+
 > **这些阈值不可为了让异常策略「跑起来」而放宽。**
 > 若确需调整，应连同理由一并记入文档，而不是就地改数字。
 
@@ -243,4 +271,4 @@ pickle 记录的是**类路径 + 类名**。瘦客户端没有 LeRobot，
 - [ ] 数据集的 `fps` 或 `codebase_version`
 - [ ] 超声解码的调色板或动态范围配置
 - [ ] `--fps`、`--actions-per-chunk`、`--chunk-size-threshold`
-- [ ] 任何安全阈值
+- [ ] 任何安全阈值，含限速模式的 `--policy-linear-speed` / `--policy-angular-speed`

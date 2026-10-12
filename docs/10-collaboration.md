@@ -27,14 +27,15 @@
 vla-ultrasound/
 ├── tools/                  # GPU 侧：裁剪、统计量重算、校验
 ├── pi0_ultrasound_lora/    # GPU 侧：serve.py、训练脚本、远程客户端
-├── robot/                  # 工控机侧：采集与控制  ← 新增
-│   ├── my_code/            #   采集主链路与数据集构建
-│   ├── realsense/          #   RealSense 采集器
-│   └── real_robot/         #   真机远程策略客户端
+├── robot/                  # 工控机侧：采集与控制（脱敏副本）
+│   └── my_code/            #   采集主链路与数据集构建  ← 已入库
 └── docs/                   # 两侧共同维护
 ```
 
-`robot/` 尚未建立，具体划分见第七节。
+`robot/my_code/` 已入库，是现行采集链路的 13 个模块与对应测试，
+与工控机原件的差异只有两处替换（见 `robot/README.md` 第一节）。
+
+`robot/realsense/`、`robot/real_robot/` 尚未入库，见第七节。
 
 **注意 `pi0_remote` 与 `pi0_ultrasound_lora/remote/` 是同一套东西的两端**
 （服务端 / 客户端）。合并到一处时必须注明「两侧必须同版本」——
@@ -176,10 +177,16 @@ git diff --cached | grep -nE 'sk-|hf_|ghp_|AKIA|PRIVATE KEY|password|api_key|tok
 
 ## 七、待办
 
-- [ ] 建立 `robot/` 目录，明确 `my_code` 中 25 个脚本的取舍
-      （实验性脚本与正式链路应分开）
+- [x] 建立 `robot/` 目录，明确 `my_code` 中脚本的取舍
+      —— 已收入现行链路的 13 个模块 + 7 个测试 + 2 份流程说明 + 环境脚本；
+      排除的 8 项及理由见 `robot/README.md` 第三节
+- [x] 工控机侧的路径与内网地址按第四节规则消毒
+      —— IP 与 SDK 绝对路径共两处替换，涉及 8 个文件
+- [ ] 收入 `robot/remote_client.py`（`pi0_remote/`，即链路测试的瘦客户端），
+      并与 `pi0_ultrasound_lora/remote/` 合并到一处；合并时必须注明「两侧同版本」，
+      `services_pb2*.py` 版本不一致不会报错、只会握手失败
+- [ ] 收入 `robot/realsense_collector/`（独立 RealSense 采集器）
 - [ ] `real_robot_client.py` 入库前**逐行审阅**，确认安全阈值
-      是通用保守值而非实验室特定值
-- [ ] 合并 `pi0_remote` 与 `pi0_ultrasound_lora/remote/`
-- [ ] 工控机侧的路径与内网地址按第四节规则消毒
+      是通用保守值而非实验室特定值；另需收录其依赖的 `export_ultrasound_images.py`
+      （已随 `my_code` 入库）与 `remote_client.py`
 - [ ] 决定提交者身份是否改用真实邮箱

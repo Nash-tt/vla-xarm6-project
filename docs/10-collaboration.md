@@ -41,9 +41,19 @@ vla-ultrasound/
 - `real_robot/` —— 七处替换；**其传输层与 `pi0_ultrasound_lora/remote/` 已分叉，
   两者不等价**，见 `robot/README.md` 第 3.3 节
 
-**注意 `pi0_remote` 与 `pi0_ultrasound_lora/remote/` 是同一套东西的两端**
-（服务端 / 客户端）。合并到一处时必须注明「两侧必须同版本」——
-`services_pb2*.py` 是 proto 生成的桩，版本不一致不会报错，只会握手失败。
+### `pi0_remote` 与 `pi0_ultrasound_lora/remote/` 是**同一套东西**，不是两端
+
+工控机上的 `Desktop\pi0_remote\` 就是本仓库的 `pi0_ultrasound_lora/remote/`——
+都是链路测试用的**瘦客户端**，服务端是 `pi0_ultrasound_lora/serve.py`。
+已逐文件核对：`requirements.txt` 与两个 `services_pb2*.py` **逐字节相同**；
+`remote_client.py` 只差 3 行脱敏，`README.md` 只差主机名与地址替换。
+因此**不再另收一份到 `robot/` 下**，避免同一文件出现两个会各自漂移的副本。
+
+`pi0_ultrasound_lora/remote/` 里的 `netprobe.py` 是**本机侧**工具（工控机上没有），
+用于探测链路带宽与延迟，因此留在服务端那一侧。
+
+**必须同版本的是客户端与 `serve.py`**，不是上面这两个目录：
+`services_pb2*.py` 由 proto 生成，两端版本不一致时**不会报错，只会握手失败**。
 
 ---
 
@@ -196,5 +206,7 @@ git diff --cached | grep -nE 'sk-|hf_|ghp_|AKIA|PRIVATE KEY|password|api_key|tok
       而 `real_robot_client.py` 两者都用，**只能配 815 那版跑**。
       合并时以 815 版为准，同步更新 `pi0_ultrasound_lora/remote/README.md`；
       另需注明 `services_pb2*.py` 两侧必须同版本——版本不一致不会报错、只会握手失败
-- [ ] 收入 `pi0_remote/`（链路测试的瘦客户端，679 行那版）
+- [x] 收入 `pi0_remote/`（链路测试的瘦客户端）
+      —— **本就已在仓库里**，即 `pi0_ultrasound_lora/remote/`，逐文件核对为同一套东西，
+      未另收副本；见本文件第二节
 - [ ] 决定提交者身份是否改用真实邮箱

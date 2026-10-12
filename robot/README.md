@@ -223,6 +223,13 @@ Windows 电脑上单独跑（见其 `README.md` 的部署一节）。它与 `my_
 统一两份是[文档 10](../docs/10-collaboration.md) 第七节的待办；那时须以 815 版为准，
 并把 `pi0_ultrasound_lora/remote/README.md` 与本文档一并更新。
 
+**另一份（679 行）在哪里、为什么不在本目录下。** 它就是工控机上的 `Desktop\pi0_remote\`，
+而**仓库里已经有了**——即 `pi0_ultrasound_lora/remote/`。已逐文件核对：
+`requirements.txt` 与两个 `services_pb2*.py` 逐字节相同，`remote_client.py` 只差 3 行脱敏，
+`README.md` 只差主机名与地址替换。所以这里**不再收第二份**：
+同一个文件在树里出现两次，只会各自漂移。它留在服务端那一侧也更合理——
+服务端 `serve.py` 就在隔壁，而两者是必须同版本的一对。
+
 ### 3.4 没收录的
 
 | 项 | 原因 |

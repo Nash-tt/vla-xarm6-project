@@ -94,9 +94,14 @@ GPU 侧的路径、主机名与内网地址在入库前统一替换为占位值�
 | `/home/lab301/lerobot/` | `/opt/lerobot/` |
 | `/home/lab301/miniconda3/envs/lerobot/bin/` | `/opt/conda/envs/lerobot/bin/` |
 | `/home/lab301/` | `/home/user/` |
-| `100.127.97.34` / `100.84.223.116` | `100.64.0.1` / `100.64.0.2` |
-| `computer301` / `laptop-ibci0mc7` | `gpu-server` / `robot-pc` |
+| GPU 机 Tailscale 地址（`100.127.*.*`） | `100.64.0.1` |
+| 工控机 Tailscale 地址（`100.84.*.*`） | `100.64.0.2` |
+| GPU 机主机名 | `gpu-server` |
+| 工控机主机名 | `robot-pc` |
 | 权重 snapshot 绝对路径 | HF repo id |
+
+> 上面几行的原文只写成**可检索的前缀**（如 `100.127.`），不写全。
+> 消毒时拿前缀 `grep -rn` 一遍即可定位；完整值不落盘是本清单能成立的前提。
 
 另有两类需**改写**而非替换：
 

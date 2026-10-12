@@ -5,8 +5,17 @@
 工控机负责驱动机械臂。
 
 本仓库是项目实施过程中的**问题与解决方案记录**及配套工具，不构成通用软件库。
-`docs/` 下每篇文档对应一个曾导致训练失败或结果偏差的具体问题，
-统一按「现象 → 原因 → 处理 → 验证 → 结论」组织。
+
+文档分两套，分工明确：
+
+| 目录 | 回答的问题 | 组织方式 |
+|---|---|---|
+| [`docs/`](docs/) | **当初为什么这么改**——每个问题按「现象 → 原因 → 处理 → 验证 → 结论」记一遍 | 按时间顺序，一篇一个问题 |
+| [`design/`](design/) | **现在这套东西是怎么搭的**——分几块、每块之间传什么、关键参数为什么取这个值 | 按层次，一篇一个环节 |
+
+**查实现细节看 `design/`，查历史决策看 `docs/`。**
+`docs/` 是按时间顺序写的，早期文档描述的实现**可能已经不是现在的实现**；
+两者冲突时以 `design/` 与代码为准。
 
 ---
 
@@ -37,7 +46,8 @@
 │   └── verify_trim.py           # 裁剪一致性校验（T1–T10）
 ├── pi0_ultrasound_lora/
 │   ├── serve.py                 # policy server（含两处上游缺陷的修复）
-│   ├── run_train.sh             # π0 + LoRA 微调
+│   ├── run_train.sh             # π0 + LoRA 微调（未裁剪数据集，即 run1）
+│   ├── run_train_scan.sh        # π0 + LoRA 微调（裁剪数据集，即 run2）
 │   ├── replay_client.py         # 本机回放测试客户端
 │   ├── remote/                  # 工控机侧的轻量客户端；仓库里唯一的传输层
 │   │   ├── remote_client.py     # 真机客户端也 import 这一份
@@ -45,12 +55,15 @@
 │   │   ├── test_remote_client_timing.py
 │   │   └── services_pb2*.py     # proto 生成的 gRPC 桩（免装 grpcio-tools）
 │   └── measure_inference.py     # 推理耗时测量
-├── run_train_smolvla_scan.sh    # SmolVLA 微调（扫描段数据集）
+├── run_train_smolvla_scan.sh    # SmolVLA 微调（smolvla 版扫描段数据集）
+├── run_train_smolvla_pi0scan.sh # SmolVLA 微调（pi0 版扫描段数据集，指令措辞对照）
+├── run_train_act_scan.sh        # ACT 微调（从零训练，chunk_size=50）
 ├── plot_pred_vs_demo.py         # 预测与示范对比图
 ├── robot/                       # 工控机侧代码副本（见 robot/README.md）
 │   ├── my_code/                 # 示教点采集 → 轨迹生成 → 三路同步采集 → 对齐 → 建集
 │   ├── realsense_collector/     # 独立 RealSense RGB-D 采集器
 │   └── real_robot/              # 真机远程策略客户端（默认影子模式；不含传输层）
+├── design/                      # 实现方案，见 design/README.md
 └── docs/                        # 问题记录，见下表
 ```
 
@@ -72,6 +85,21 @@
 | 08 | [openpi 兼容性评估](docs/08-openpi-compat.md) | 改用 openpi 时，现有客户端与服务端的可复用性 |
 | 09 | [两端接口契约](docs/09-interface-contract.md) | 数据格式、维序、相机键名映射、roll 口径与安全阈值 |
 | 10 | [两台机器的协作方式](docs/10-collaboration.md) | 代码交换通道、提交前消毒清单、绝不入库的项 |
+
+### 实现方案（`design/`）
+
+按链路层次组织，描述**代码现在长什么样、为什么这么设计**。索引见
+[`design/README.md`](design/README.md)。
+
+| 篇 | 覆盖 |
+|---|---|
+| [01 采集链路](design/01-collection.md) | 示教点 → 轨迹 → 三路同步采集 |
+| [02 对齐与建集](design/02-align-and-build.md) | 时钟映射、四路取法、`quality.valid`、超声解码 |
+| [03 数据集工具](design/03-dataset-tools.md) | 裁剪判据、为何不重编码、`--unwrap-roll`、`--donor` |
+| [04 训练](design/04-training.md) | π0-LoRA / SmolVLA / ACT 三条链路与它们的差异 |
+| [05 推理服务端](design/05-inference-server.md) | `serve.py` 的覆写与对上游两处缺陷的修复 |
+| [06 传输层](design/06-transport-layer.md) | 瘦客户端、pickle 垫片、三个同步机制 |
+| [07 真机客户端](design/07-real-robot-client.md) | 三道安全层、三路数据源、控制环 |
 
 ---
 

@@ -14,6 +14,10 @@
 
 对面**不需要** LeRobot、不需要 torch、不需要 CUDA、不需要数据集。
 
+> **实现方案见 [`design/06-transport-layer.md`](../../design/06-transport-layer.md)**——
+> 三个同步机制、pickle 垫片、`latest_only` 聚合与各参数的实际作用都记在那里。
+> 本文是这套东西**成型过程的记录**（按时间顺序），与当前实现冲突时以 `design/` 和代码为准。
+
 > **本目录里的 `remote_client.py` 是仓库中唯一一份传输层。**
 > 真机部署时整个 `remote/` 目录拷到工控机的部署目录，与 `real_robot_client.py` 并列，
 > 后者 `import remote_client` 用的就是这一份。工控机上曾另有一份 679 行的旧副本

@@ -2,6 +2,12 @@
 
 单卡 RTX 3090 (24GB) 上微调 `lerobot/pi0_base`。
 
+> **本文是这个过程的问题记录**（按时间顺序，写的当时的实现）。
+> 想要「现在这套代码长什么样、为什么这么设计」，看
+> [`../design/04-training.md`](../design/04-training.md)（训练链路）与
+> [`../design/05-inference-server.md`](../design/05-inference-server.md)（`serve.py`）。
+> 两者冲突时以 `design/` 与代码为准。索引见 [`../design/README.md`](../design/README.md)。
+
 ## 为什么是 LoRA
 
 π0 是 3B 参数的 VLA。官方显存要求：推理 >8GB / **LoRA 微调 >22.5GB** / 全量微调 >70GB。
@@ -12,7 +18,8 @@
 
 | 文件 | 作用 |
 |---|---|
-| `run_train.sh` | 训练入口。`SMOKE=1 ./run_train.sh` 跑冒烟测试（20 步） |
+| `run_train.sh` | 训练入口（第一组，未裁剪数据集）。`SMOKE=1 ./run_train.sh` 跑冒烟测试（20 步） |
+| `run_train_scan.sh` | 训练入口（第二组，换用裁剪数据集，输出到 `run2_scan`；超参与第一组完全一致，使数据集成为唯一变量） |
 | `unwrap_roll.py` | 修数据：解卷绕 roll 角的 ±180 分支切割 |
 | `recompute_stats.py` | 在全量数据上用 float64 重算 state/action 统计量 |
 | `check_dataset.py` | 验证数据集可加载、视频可解码 |
@@ -28,6 +35,8 @@
 
 ## 数据
 
+**第一组（`run_train.sh`，即 run1）：**
+
 `/data/vla/vla_batch_20261007_pi0_6d_rollunwrap`
 （由 `vla_batch_20261007_smolvla_6d_no_depth` 复制后修正，原始数据集未改动）
 
@@ -41,6 +50,19 @@
 
 pi0_base 预训练用 3 个图像槽，补一个空槽能让前缀布局与预训练完全一致
 （openpi 处理少相机机器人的做法）。
+
+**第二组（`run_train_scan.sh`，即 run2）：**
+
+`..._pi0_6d_rollunwrap_scan`（同上前缀 + `_scan`），28 episodes / **27312 帧**——
+用 `tools/trim_scan_segments.py` 裁掉了约 44% 的接近段。
+两份数据的 **roll 口径本来就相同**（都是展开口径），差别只在接近段：
+未裁的那份里 action 冻结在几百毫米外的目标点上（位置偏差中位 231 mm），
+即 run1 有相当一部分 token 在教模型输出一个远端点。
+见 [文档 01](../docs/01-dataset-trim.md) 与 [design/03](../design/03-dataset-tools.md)。
+
+> ⚠️ `run_train_scan.sh` 的输出目录是 `run2_scan`，**不要指到 `run1`**——
+> 那会覆盖已部署的 checkpoint（`serve.py` 的默认路径指向 `run1/checkpoints/012250`）。
+> 脚本自身有一道 `[[ "$OUTPUT_DIR" != *"/run1"* ]]` 的拒绝检查。
 
 ### roll 角修复
 
@@ -172,6 +194,9 @@ SMOKE=1 ./run_train.sh
 
 # 正式训练
 STEPS=24500 BATCH_SIZE=4 ./run_train.sh
+
+# 第二组：换裁剪数据集（输出到 run2_scan，不碰 run1）
+WEIGHTS=<pi0_base snapshot 目录> ./run_train_scan.sh
 ```
 
 ## 实测结果（`measure_inference.py`）

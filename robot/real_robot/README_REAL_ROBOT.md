@@ -8,6 +8,11 @@
 执行模式不会自动移动到起始位姿。机械臂必须先由已经验证过的定位流程放到
 本次任务的起始位姿。
 
+> **实现方案见 [`design/07-real-robot-client.md`](../../design/07-real-robot-client.md)**——
+> 三道安全层各自拦什么、三路数据源的时效检查、控制环的四道出口，以及一处文档纠正
+> （xArm 的时效是硬编码 0.25 s，**不受** `--sensor-max-age` 影响）。
+> 本文是操作步骤，与 `design/` 冲突时以 `design/` 和代码为准。
+
 ## 0. 依赖的两个模块
 
 本文件 `import remote_client`（传输层）与 `export_ultrasound_images`（超声解码）：

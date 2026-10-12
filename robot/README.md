@@ -6,6 +6,11 @@
 > **这里是副本，不是工作版本。** 真正的代码在工控机上，改这里不会影响采集。
 > 两侧的对应关系与回溯方式见[文档 10](../docs/10-collaboration.md)。
 
+> **实现方案见 [`design/01-collection.md`](../design/01-collection.md)（采集链路）与
+> [`design/02-align-and-build.md`](../design/02-align-and-build.md)（对齐与建集）**——
+> 串行链路的每一步为什么这么设计、关键参数为什么取这个值，都在那两篇。
+> 本文偏「这一堆文件各是干什么的」，与之冲突时以 `design/` 和代码为准。
+
 | 子目录 | 内容 | 脱敏 |
 |---|---|---|
 | `my_code/` | 采集链路：示教点 → 轨迹 → 三路同步采集 → 对齐 → 建集 | 两处替换（见第一节） |
@@ -209,7 +214,7 @@ Windows 电脑上单独跑（见其 `README.md` 的部署一节）。它与 `my_
 命中 `real_robot_client.py`（5 处）与 `README_REAL_ROBOT.md`（14 处）。
 `requirements.txt`、两个 `services_pb2*.py`、`test_real_robot_client.py` **逐字节相同，未改动**。
 
-> 早先这张表里另有一行 `/home/lab301/vla-training/pi0_ultrasound_lora/run1`，
+> 早先这张表里另有一行「工作副本里 `pi0_ultrasound_lora/run1` 的绝对路径」，
 > 那处替换只出现在 `remote_client.py`（它的 `DEFAULT_CKPT`）里；
 > 该文件已移出本目录，见 3.3，此行随之撤销。
 

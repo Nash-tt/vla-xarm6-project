@@ -176,7 +176,7 @@ def main():
     print(f"  传输预估: 走 Tailscale 按 20Mbps 算约 {size_mb * 8 / 20:.0f}s")
     print(f"\n  单帧线上体积 ≈ {2 * args.img_size * args.img_size * 3 / 1e6:.2f} MB(图) "
           f"+ 小量 state → 15Hz 需要 {15 * 2 * args.img_size ** 2 * 3 * 8 / 1e6:.0f} Mbps")
-    print("\n  下一步：把这个文件 + remote/ 目录拷到另一台主机，按 remote/README.md 跑")
+    print("\n  下一步：将回放包与 remote/ 目录复制到测试主机，操作见 docs/06-环境与操作指南.md")
 
 
 if __name__ == "__main__":

@@ -81,7 +81,7 @@
 | 04 | [时间戳精度与 tolerance_s](docs/04-timestamp-tolerance.md) | float32 时间戳的 ULP 超过默认容差，导致视频解码失败 |
 | 05 | [LoRA 加载与 rename_map](docs/05-lora-and-rename-map.md) | `from_pretrained` 对 LoRA 权重静默返回随机初始化 |
 | 06 | [远程轻量客户端](docs/06-remote-client.md) | 单帧传输量由 2.96MB 降至 0.30MB；及一处导致观测静默丢弃的缺陷 |
-| 07 | [环境与工具链](docs/07-environment.md) | conda 环境污染、torchcodec 失效、代理与镜像配置 |
+| 07 | [环境与工具链](docs/07-environment.md) | conda 环境污染、torchcodec 失效、代理与镜像配置；以及 `pgrep -f` 自匹配让队列静默等 12 小时 |
 | 08 | [openpi 兼容性评估](docs/08-openpi-compat.md) | 改用 openpi 时，现有客户端与服务端的可复用性 |
 | 09 | [两端接口契约](docs/09-interface-contract.md) | 数据格式、维序、相机键名映射、roll 口径与安全阈值 |
 | 10 | [两台机器的协作方式](docs/10-collaboration.md) | 代码交换通道、提交前消毒清单、绝不入库的项 |

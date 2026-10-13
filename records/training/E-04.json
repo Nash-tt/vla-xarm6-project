@@ -1,0 +1,57 @@
+{
+  "experiment_id": "E-04",
+  "recorded_at_utc": "2026-10-13T05:21:00.721260+00:00",
+  "run_name": "act_ultrasound_scan_20k",
+  "config_source": "checkpoints/020000/pretrained_model/train_config.json",
+  "config_sha256": "25d8f9183e20f5263f5b89d2270bb997e3a493423d623c4933ade577329f1666",
+  "checkpoint_step": 20000,
+  "configured_steps": 20000,
+  "batch_size": 24,
+  "num_workers": 8,
+  "seed": 1000,
+  "dataset_repo_id": "local/vla_batch_20261007_pi0_6d_rollunwrap_scan",
+  "base_revision": null,
+  "policy": {
+    "type": "act",
+    "chunk_size": 50,
+    "n_action_steps": 50,
+    "use_amp": false,
+    "pretrained_backbone_weights": "ResNet18_Weights.IMAGENET1K_V1",
+    "normalization_mapping": {
+      "VISUAL": "MEAN_STD",
+      "STATE": "MEAN_STD",
+      "ACTION": "MEAN_STD"
+    }
+  },
+  "optimizer": {
+    "type": "adamw",
+    "lr": 1e-05,
+    "weight_decay": 0.0001,
+    "grad_clip_norm": 10.0,
+    "betas": [
+      0.9,
+      0.999
+    ],
+    "eps": 1e-08
+  },
+  "scheduler": null,
+  "peft": null,
+  "rename_map": {},
+  "status": "ended_marker_present",
+  "log_source": "act_train_20k.log",
+  "log_sha256": "a7a716ebc4c9979bde141b4c7d2add95ee95f7b6dfb0d8f74b416c20b8d11211",
+  "last_log_progress": {
+    "step": 20000,
+    "total": 20000,
+    "elapsed": "3:03:02"
+  },
+  "max_logged_cuda_allocated_gib": 17.47,
+  "memory_scope": "LeRobot mem_gb: torch.cuda.max_memory_allocated / 1024**3; 非整卡占用",
+  "last_logged_metrics": {
+    "loss": 0.03,
+    "update_seconds": 0.541,
+    "cuda_allocated_gib": 17.47
+  },
+  "num_learnable_params": 51571590,
+  "num_total_params": 51571590
+}

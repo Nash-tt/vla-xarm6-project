@@ -1,0 +1,80 @@
+{
+  "experiment_id": "E-01",
+  "recorded_at_utc": "2026-10-13T05:21:00.573399+00:00",
+  "run_name": "run1",
+  "config_source": "checkpoints/012250/pretrained_model/train_config.json",
+  "config_sha256": "6832bec2d7f0cd4674bfef3f2cadfc8b0ecf886ecddd56ba9324408a21893db9",
+  "checkpoint_step": 12250,
+  "configured_steps": 12250,
+  "batch_size": 8,
+  "num_workers": 8,
+  "seed": 1000,
+  "dataset_repo_id": "local/vla_batch_20261007_pi0_6d_rollunwrap",
+  "base_revision": "6e245399ad403ccf02b8112b73cfdc2633068f38",
+  "policy": {
+    "type": "pi0",
+    "chunk_size": 50,
+    "n_action_steps": 50,
+    "dtype": "bfloat16",
+    "use_amp": false,
+    "gradient_checkpointing": true,
+    "freeze_vision_encoder": false,
+    "train_expert_only": false,
+    "normalization_mapping": {
+      "VISUAL": "IDENTITY",
+      "STATE": "MEAN_STD",
+      "ACTION": "MEAN_STD"
+    }
+  },
+  "optimizer": {
+    "type": "adamw",
+    "lr": 0.0001,
+    "weight_decay": 0.01,
+    "grad_clip_norm": 1.0,
+    "betas": [
+      0.9,
+      0.95
+    ],
+    "eps": 1e-08
+  },
+  "scheduler": {
+    "type": "cosine_decay_with_warmup",
+    "num_warmup_steps": 1000,
+    "num_decay_steps": 30000,
+    "peak_lr": 0.0001,
+    "decay_lr": 1e-05
+  },
+  "peft": {
+    "target_modules": null,
+    "full_training_modules": [
+      "state_proj",
+      "action_in_proj",
+      "action_out_proj",
+      "action_time_mlp_in",
+      "action_time_mlp_out"
+    ],
+    "method_type": "LORA",
+    "init_type": null,
+    "r": 16,
+    "lora_alpha": 16
+  },
+  "rename_map": {
+    "observation.images.rgb": "observation.images.base_0_rgb",
+    "observation.images.ultrasound": "observation.images.left_wrist_0_rgb"
+  },
+  "status": "checkpoint_available_log_not_provided",
+  "adapter": {
+    "peft_type": "LORA",
+    "r": 16,
+    "lora_alpha": 16,
+    "lora_dropout": 0.0,
+    "target_modules": "(.*\\.gemma_expert\\..*\\.self_attn\\.(q|v)_proj|model\\.(state_proj|action_in_proj|action_out_proj|action_time_mlp_in|action_time_mlp_out))",
+    "modules_to_save": [
+      "state_proj",
+      "action_in_proj",
+      "action_out_proj",
+      "action_time_mlp_in",
+      "action_time_mlp_out"
+    ]
+  }
+}

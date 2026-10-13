@@ -11,10 +11,13 @@
 > 串行链路的每一步为什么这么设计、关键参数为什么取这个值，都在那两篇。
 > 本文偏「这一堆文件各是干什么的」，与之冲突时以 `design/` 和代码为准。
 
-| 子目录 | 内容 | 脱敏 |
-|---|---|---|
-| `my_code/` | 采集链路：示教点 → 轨迹 → 三路同步采集 → 对齐 → 建集 | 两处替换（见第一节） |
-| `realsense_collector/` | 独立 RealSense RGB-D 采集器，可脱离机器人单独用 | **零脱敏**，与原件逐字节相同 |
+| 子目录 | 内容 | 脱敏 | 说明文档 |
+|---|---|---|---|
+| [`my_code/`](my_code/) | 采集链路：示教点 → 轨迹 → 三路同步采集 → 对齐 → 建集 | 两处替换（见第一节） | [拟合轨迹流程](my_code/README_FITTED_TRAJECTORY_VLA_SYNC.md)（**现行**）、[手拖示教流程](my_code/README_VLA_SYNC.md) |
+| [`real_robot/`](real_robot/) | 真机远程策略客户端，默认影子模式 | 六处替换（见 3.2） | [README_REAL_ROBOT.md](real_robot/README_REAL_ROBOT.md) |
+| [`realsense_collector/`](realsense_collector/) | 独立 RealSense RGB-D 采集器，可脱离机器人单独用 | **零脱敏**，与原件逐字节相同 | [README.md](realsense_collector/README.md) |
+
+三节分别对应上表三行：第一节 `my_code/`、第二节 `realsense_collector/`、第三节 `real_robot/`。
 
 ---
 
@@ -113,7 +116,9 @@ build_vla_training_dataset.py ── export_ultrasound_images.py
 - xArm Python SDK（`setup_vla_env.ps1` 从本地项目安装）
 - RealSense：`requirements_vla_realsense.txt`
 - PhaseLink：需用打了 VLA 记录补丁的 Qt 工程重新编译一次，旧 `Phaselink.exe`
-  不读 `PHASELINK_VLA_DIR`，不会产出同步文件。步骤见两份 README
+  不读 `PHASELINK_VLA_DIR`，不会产出同步文件。步骤见
+  [拟合轨迹流程说明](my_code/README_FITTED_TRAJECTORY_VLA_SYNC.md)与
+  [手拖示教流程说明](my_code/README_VLA_SYNC.md)
 - 超声解码调色板与动态范围来自 PhaseLink 侧；若改动需同步[文档 09](../docs/09-interface-contract.md)
 
 采集产物（图像目录、原始包、示教点 JSON）均不入库。

@@ -45,6 +45,7 @@
 │   ├── recompute_stats_local.py # 重算 meta/stats.json（必须指定 --donor）
 │   └── verify_trim.py           # 裁剪一致性校验（T1–T10）
 ├── pi0_ultrasound_lora/
+│   ├── README.md                # π0-LoRA 链路的问题记录与实测数据
 │   ├── serve.py                 # policy server（含两处上游缺陷的修复）
 │   ├── run_train.sh             # π0 + LoRA 微调（未裁剪数据集，即 run1）
 │   ├── run_train_scan.sh        # π0 + LoRA 微调（裁剪数据集，即 run2）
@@ -64,8 +65,11 @@
 │   ├── realsense_collector/     # 独立 RealSense RGB-D 采集器
 │   └── real_robot/              # 真机远程策略客户端（默认影子模式；不含传输层）
 ├── design/                      # 实现方案，见 design/README.md
-└── docs/                        # 问题记录，见下表
+└── docs/                        # 问题记录，见 docs/README.md
 ```
+
+> 每个子目录各有一份自己的 README 作索引：`design/`、`docs/`、`robot/`、
+> `pi0_ultrasound_lora/`（及其 `remote/`）。根 README 只做入口，不重复它们的内容。
 
 ---
 
@@ -86,6 +90,11 @@
 | 09 | [两端接口契约](docs/09-interface-contract.md) | 数据格式、维序、相机键名映射、roll 口径与安全阈值 |
 | 10 | [两台机器的协作方式](docs/10-collaboration.md) | 代码交换通道、提交前消毒清单、绝不入库的项 |
 
+> 上表是**一段话摘要**；每篇的要点、判据、涉及哪些代码文件与建议阅读顺序，
+> 见 [`docs/README.md`](docs/README.md)。
+> 其中若干处与现行代码对不上，偏差逐条列在
+> [`design/README.md` 第四节](design/README.md#四和-docs-的关系)，引用时以那张表为准。
+
 ### 实现方案（`design/`）
 
 按链路层次组织，描述**代码现在长什么样、为什么这么设计**。索引见
@@ -100,6 +109,15 @@
 | [05 推理服务端](design/05-inference-server.md) | `serve.py` 的覆写与对上游两处缺陷的修复 |
 | [06 传输层](design/06-transport-layer.md) | 瘦客户端、pickle 垫片、三个同步机制 |
 | [07 真机客户端](design/07-real-robot-client.md) | 三道安全层、三路数据源、控制环 |
+
+### 模块 README
+
+各模块自己的说明与操作步骤，**由所在目录的 README 索引**：
+
+| 入口 | 往下索引到 |
+|---|---|
+| [`pi0_ultrasound_lora/README.md`](pi0_ultrasound_lora/README.md) | 本模块问题记录、实测耗时；→ [`remote/README.md`](pi0_ultrasound_lora/remote/README.md) |
+| [`robot/README.md`](robot/README.md) | `my_code/` 两份流程说明、`real_robot/README_REAL_ROBOT.md`、`realsense_collector/README.md` |
 
 ---
 

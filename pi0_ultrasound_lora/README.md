@@ -31,7 +31,7 @@
 | `serve.py` | **远程推理服务端**（gRPC），修掉上游加载 LoRA 的静默 bug |
 | `replay_client.py` | **回放客户端**：纯软件验证 wire 契约，不碰硬件 |
 | `make_replay_bundle.py` | 把数据集一小段导成自包含 `.npz`（约 0.19MB/帧），供**另一台主机**发过来 |
-| `remote/` | **瘦客户端**：对面只要 `grpcio + numpy`，不需要 torch / lerobot / 数据集 |
+| `remote/` | **瘦客户端**：对面只要 `grpcio + numpy`，不需要 torch / lerobot / 数据集；说明见 [`remote/README.md`](remote/README.md) |
 
 ## 数据
 
@@ -388,7 +388,7 @@ pi0 本身的采样随机性 + 问策略的帧不完全固定。
 > 第三行是在 `remote_client.py` **合流前**的版本上测的（当时的 679 行版）。
 > 合流后这一份同时是真机的传输层，启动了预热、`--chunk-size-threshold` 默认由
 > 0.5 提到 0.9，观测上传也移出了动作时钟——MAE 应仍在同量级，但表格末列那三个
-> 计数会变，复测时以新输出为准。细节见 `remote/README.md`。
+> 计数会变，复测时以新输出为准。细节见 [`remote/README.md`](remote/README.md)。
 
 **链路零降质**：包里的图像预先缩到 224×224，而服务端收到后还会再缩一次 ——
 224→224 的 bilinear（align_corners=False, scale=1）映射到原像素中心、权重恰为 1，
@@ -398,7 +398,7 @@ pi0 本身的采样随机性 + 问策略的帧不完全固定。
 1.663 与本机 1.478 的差属于 π0 自身采样噪声（本机跑两次就是 1.478/1.498），
 不是链路引入的。**两条路都走通的结论：wire 契约对齐。**
 
-跨机路上踩的两个坑（都已修，详见 `remote/README.md`）：
+跨机路上踩的两个坑（都已修，详见 [`remote/README.md`](remote/README.md)）：
 
 - **pickle 垫片只抄字段没抄方法**：对面没有 `lerobot` 模块，靠 `sys.modules` 塞同名
   垫片让 unpickle 能解析类路径。只写字段的话 unpickle 正常、对象看着也对，一调

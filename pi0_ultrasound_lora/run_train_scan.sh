@@ -51,7 +51,17 @@ export TOKENIZERS_PARALLELISM=false
 unset HTTP_PROXY HTTPS_PROXY ALL_PROXY http_proxy https_proxy all_proxy
 export HF_HUB_OFFLINE=1
 
-[[ -d "$WEIGHTS" ]]      || { echo "找不到 pi0_base 权重目录: $WEIGHTS" >&2; exit 1; }
+# 权重既可以是本地 snapshot 目录，也可以是 HF repo id（org/name）——后者在联网时由
+# from_pretrained 自己去拉。但这个脚本置了 HF_HUB_OFFLINE=1，走 repo id 时该权重必须
+# 已在 HF 缓存里，否则报的是网络错误，很难查。所以这里两种写法都放行，只拦明显写错的。
+if [[ -d "$WEIGHTS" ]]; then
+  :
+elif [[ "$WEIGHTS" == */* && "$WEIGHTS" != /* && "$WEIGHTS" != ./* ]]; then
+  echo "pi0_base: 权重按 HF repo id 处理 —— $WEIGHTS（离线模式下须已在缓存里）"
+else
+  echo "pi0_base: 权重既不是已存在的目录，也不像 HF repo id（org/name）: $WEIGHTS" >&2
+  exit 1
+fi
 [[ -d "$DATASET_ROOT" ]] || { echo "找不到数据集: $DATASET_ROOT" >&2; exit 1; }
 [[ -x "$LEROBOT_BIN" ]]  || { echo "找不到 lerobot-train: $LEROBOT_BIN" >&2; exit 1; }
 [[ "$OUTPUT_DIR" != *"/run1"* ]] || { echo "拒绝写入 run1（已部署的 checkpoint）" >&2; exit 1; }

@@ -214,7 +214,15 @@ export HF_HUB_OFFLINE=1
 现在脚本不依赖激活状态，环境坏了会**在开跑前**报一句清楚的错，而不是训练到一半崩。
 （详见[文档 08](../docs/08-openpi-compat.md)。）
 
-每个脚本还各有一张前置检查：权重目录存在、数据集目录存在、`lerobot-train` 可执行。
+每个脚本还各有一张前置检查：权重、数据集目录、`lerobot-train` 可执行。
+
+**权重那一条要接受两种写法**（本地 snapshot 目录，或 HF repo id `org/name`）。
+2026-10-13 之前它写的是 `[[ -d "$WEIGHTS" ]]`，而默认值恰好是 repo id
+（`lerobot/pi0_base` / `lerobot/smolvla_base`）⇒ **不带 `WEIGHTS` 直接跑必然在这一句退出**，
+报的还是「找不到 … 权重目录」这种把人往错方向引的话——repo id 本来是合法的。
+判据很简单：只有 `-d` 通过、或形如 `org/name`（不以 `/`、`./` 开头）才放行。
+注意脚本置了 `HF_HUB_OFFLINE=1`，走 repo id 时该权重必须已在 HF 缓存里，
+否则报的是网络错误，更难查。
 
 ### 6.1 `tolerance_s=1e-3`
 

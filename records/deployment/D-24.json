@@ -1,0 +1,60 @@
+{
+  "experiment_id": "D-24",
+  "date": "2026-10-14",
+  "policy": "smolvla",
+  "training_experiment": "E-06",
+  "checkpoint_step": 20000,
+  "rtc_enabled": false,
+  "shadow": {
+    "run": "132444",
+    "processed": 50,
+    "passed": 50,
+    "max_command_step_mm": 0.13333333333333336
+  },
+  "execute": {
+    "run": "132841",
+    "requested_nominal_action_seconds": 50,
+    "duration_clock": "actions",
+    "actions_processed": 750,
+    "first_last_sequence": [
+      0,
+      749
+    ],
+    "sdk_return_codes_all_zero": true,
+    "first_last_command_span_seconds": 148.4712426,
+    "pause_count": 25,
+    "pause_total_seconds": 98.52899999995134,
+    "pause_max_seconds": 8.85899999999674,
+    "rate_limiter": {
+      "linear_mm_s": 2,
+      "angular_deg_s": 1,
+      "all_750_translation_commands_limited": true,
+      "max_translation_step_mm": 0.13333333333333336
+    },
+    "max_precommand_command_tracking_error_mm": 0.2669165204663552,
+    "max_raw_target_actual_distance_mm": 37.22490655609474,
+    "actual_displacement_mm": [
+      0.0010000000000331966,
+      97.43399999999998,
+      22.480000000000018
+    ],
+    "actual_displacement_norm_mm": 99.99367358488234,
+    "rpc_mean_seconds": 5.662,
+    "rpc_max_seconds": 30.278,
+    "image_max_age_limit_seconds": 1,
+    "max_observed_us_age_seconds": 0.8725132,
+    "queue_empty_timeout_seconds": 0,
+    "result": "completed_action_budget",
+    "task_success_rate": "not_measured",
+    "scan_endpoint_reached": "not_evaluated"
+  },
+  "final_robot": {
+    "state": 2,
+    "mode": 0,
+    "error_code": 0,
+    "warn_code": 0,
+    "force_norm_n": 18.44049951760837,
+    "torque_norm_nm": 1.4826206455890365
+  },
+  "raw_log_sha256": "4f0f4b45cc4f5f32a03dccbddbdeac6788ad83b0894cfaa193a9edcc824d0897"
+}

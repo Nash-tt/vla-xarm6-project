@@ -1,0 +1,16 @@
+{
+  "count": 27284,
+  "mean_mm": 0.6855090671929766,
+  "p50_mm": 0.6000045253258908,
+  "p95_mm": 0.9999984295604409,
+  "p99_mm": 1.40000382603754,
+  "max_mm": 5.000011955652993,
+  "over_3mm": 4,
+  "experiment_id": "D-20",
+  "date": "2026-10-13",
+  "dataset_repo_id": "local/vla_batch_20261007_pi0_6d_rollunwrap_scan",
+  "scope": "同回合相邻动作标签三维位置距离；非运动安全上限验证",
+  "official_servo_guide": "https://docs.supportarticle.ufactory.cc/support_articles/developer/ufactory-servo-mode-guide.html",
+  "sdk_source_check": "工控机现有 SDK 的 set_servo_cartesian 注释将 speed/mvacc/mvtime 标为 reserved",
+  "threshold_change": "未修改，单步保持3 mm"
+}

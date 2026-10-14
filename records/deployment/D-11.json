@@ -1,0 +1,19 @@
+{
+  "experiment_id": "D-11",
+  "date": "2026-10-13",
+  "policy_type": "act",
+  "checkpoint_step": "020000",
+  "mode": "shadow",
+  "planned_control_seconds": 10,
+  "actual_actions": 0,
+  "status": "startup_failed",
+  "failure": "RealSense startup timed out",
+  "robot_connected": false,
+  "motion_commands_sent": false,
+  "realsense_enumerated": true,
+  "usb_type": "3.2",
+  "viewer_running": true,
+  "cause": "相机占用为待确认推测",
+  "log_identifier": "real_policy_20261013_194317",
+  "live_ultrasound_updates_confirmed": true
+}

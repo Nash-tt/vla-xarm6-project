@@ -1,0 +1,23 @@
+{
+  "experiment_id": "D-16",
+  "date": "2026-10-13",
+  "policy_type": "smolvla",
+  "checkpoint_step": "020000",
+  "mode": "shadow",
+  "preview_enabled": true,
+  "preview_rate_limit_fps": 10,
+  "planned_control_seconds": 120,
+  "completed_control_loop": true,
+  "processed_actions": 451,
+  "shadow_valid_actions": 2,
+  "motion_commands_sent": 0,
+  "observations_logged": 22,
+  "run_identifier": "real_policy_20261013_202704",
+  "raw_log_sha256": "f46e30b737811ca9b8c1a595f31fbe5f329f53f9515d3914df395809bfb42892",
+  "observation_rpc_average_seconds": 7.215,
+  "observation_rpc_max_seconds": 33.931,
+  "exit_code": 0,
+  "task_result": 0,
+  "visual_confirmation": "未收到操作人员目视确认",
+  "scope": "带预览的 120 秒影子循环；不构成运动或实时显示帧率验证"
+}

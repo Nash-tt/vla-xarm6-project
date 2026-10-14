@@ -1,0 +1,65 @@
+{
+  "experiment_id": "E-06",
+  "recorded_at_utc": "2026-10-14T03:43:32.750656+00:00",
+  "run_name": "smolvla_relative_E06_20k",
+  "config_source": "checkpoints/020000/pretrained_model/train_config.json",
+  "config_sha256": "1e0b488797c3fadc0e8d6b51ef885ac5d24f77e0417bd6bde53c09ca331fd935",
+  "checkpoint_step": 20000,
+  "configured_steps": 20000,
+  "batch_size": 32,
+  "num_workers": 8,
+  "seed": 1000,
+  "dataset_repo_id": "local/vla_batch_20261007_pi0_6d_rollunwrap_scan",
+  "base_revision": "c83c3163b8ca9b7e67c509fffd9121e66cb96205",
+  "policy": {
+    "type": "smolvla",
+    "chunk_size": 50,
+    "n_action_steps": 50,
+    "use_amp": true,
+    "freeze_vision_encoder": true,
+    "train_expert_only": true,
+    "train_state_proj": true,
+    "normalization_mapping": {
+      "VISUAL": "IDENTITY",
+      "STATE": "MEAN_STD",
+      "ACTION": "MEAN_STD"
+    }
+  },
+  "optimizer": {
+    "type": "adamw",
+    "lr": 0.0001,
+    "weight_decay": 1e-10,
+    "grad_clip_norm": 10.0,
+    "betas": [
+      0.9,
+      0.95
+    ],
+    "eps": 1e-08
+  },
+  "scheduler": {
+    "type": "cosine_decay_with_warmup",
+    "num_warmup_steps": 1000,
+    "num_decay_steps": 30000,
+    "peak_lr": 0.0001,
+    "decay_lr": 2.5e-06
+  },
+  "peft": null,
+  "rename_map": {},
+  "status": "ended_marker_present",
+  "log_source": "smolvla_relative_E06_20k.log",
+  "log_sha256": "10aba38802d678e591dc418389d052b8ada65d62959aaebbbe9b45e3f80f1c43",
+  "last_log_progress": {
+    "step": 20000,
+    "total": 20000,
+    "elapsed": "3:10:51"
+  },
+  "max_logged_cuda_allocated_gib": 8.27,
+  "memory_scope": "LeRobot mem_gb: torch.cuda.max_memory_allocated / 1024**3; 非整卡占用",
+  "last_logged_metrics": {
+    "loss": 0.007,
+    "update_seconds": 0.559,
+    "cuda_allocated_gib": 8.19
+  },
+  "num_learnable_params": 99880992,
+  "num_total_params": 450046176
+}

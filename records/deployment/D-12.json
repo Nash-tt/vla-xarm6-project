@@ -1,0 +1,80 @@
+{
+  "experiment_id": "D-12",
+  "date": "2026-10-13",
+  "policy_type": "act",
+  "checkpoint_step": "020000",
+  "mode": "shadow",
+  "planned_control_seconds": 10,
+  "control_loop_completed": true,
+  "processed_actions": 50,
+  "valid_actions": 0,
+  "rejected_actions": 50,
+  "motion_commands_sent": 0,
+  "observations_logged": 2,
+  "run_identifier": "real_policy_20261013_194648",
+  "raw_log_sha256": "686df9207db9c4701f576e17c7b35ae57a2ceba41d9f0d5db11107dee8611a55",
+  "actual_initial_tcp_pose": [
+    437.038,
+    -190.555,
+    296.678,
+    162.63120535890852,
+    12.782459226250614,
+    -91.86513078652102
+  ],
+  "first_policy_target": [
+    403.5668640136719,
+    -214.66189575195312,
+    273.88818359375,
+    166.57559204101562,
+    16.678680419921875,
+    -91.8836898803711
+  ],
+  "raw_target_distance_mm": {
+    "first": 47.12573711722064,
+    "minimum": 41.32599793691177,
+    "maximum": 49.87645992528558
+  },
+  "raw_target_angle_deg": {
+    "first": 5.544282670279502,
+    "minimum": 5.523638727530803,
+    "maximum": 5.918004544608713
+  },
+  "rgb_age_max_seconds": 0.030999999988125637,
+  "ultrasound_age_max_seconds": 0.0825841,
+  "action_timestamp_span_seconds": 3.2536029,
+  "observation_rpc_seconds": {
+    "average": 25.326,
+    "maximum": 25.326
+  },
+  "rejection_categories": {
+    "policy target too far from actual TCP": 50
+  },
+  "image_shapes_hwc": {
+    "rgb": [
+      720,
+      1280,
+      3
+    ],
+    "ultrasound": [
+      256,
+      256,
+      3
+    ]
+  },
+  "device": "cuda",
+  "limits": {
+    "tracking_mm": 12,
+    "tracking_deg": 5,
+    "max_step_mm": 3,
+    "max_step_deg": 2
+  },
+  "task": "Follow the fitted scan trajectory with the ultrasound probe.",
+  "trajectory_constraint": false,
+  "rate_limiter": false,
+  "queue_empty_stop_seconds": 3,
+  "queue_empty_stop_scope": "仅执行模式生效，影子模式未触发该停止机制",
+  "exit_code": 0,
+  "shutdown_warning": "结束后仍在上传的 RPC 被关闭通道取消；未计为运行中错误",
+  "independent_evaluation": "未测量",
+  "force_execution_checks": "未执行"
+}

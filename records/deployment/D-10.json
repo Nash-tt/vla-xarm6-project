@@ -1,0 +1,28 @@
+{
+  "policy_type": "smolvla",
+  "checkpoint_step": "020000",
+  "output_shape": [
+    50,
+    6
+  ],
+  "finite": true,
+  "handshake_and_load_seconds": 5.977089599997271,
+  "upload_to_first_chunk_seconds": 3.616714400006458,
+  "input_image_shapes": [
+    [
+      224,
+      224,
+      3
+    ],
+    [
+      224,
+      224,
+      3
+    ]
+  ],
+  "task": "Follow the fitted scan trajectory with the ultrasound probe.",
+  "scope": "单帧回放网络验证；原回放包图像经服务端重采样；未连接机械臂或实时传感器",
+  "experiment_id": "D-10",
+  "date": "2026-10-13",
+  "source_sha256": "96d509f238cbd1cf9124145604ba696bb8a1fc0a27155688d1d59123e6d28eca"
+}

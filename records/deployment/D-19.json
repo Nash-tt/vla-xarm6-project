@@ -1,0 +1,49 @@
+{
+  "experiment_id": "D-19",
+  "date": "2026-10-13",
+  "policy_type": "smolvla",
+  "checkpoint_step": "020000",
+  "requested_mode": "execute",
+  "planned_control_seconds": 100,
+  "actual_motion_seconds": 0,
+  "motion_commands_sent": 0,
+  "actual_mode": "execute_preflight_rejected",
+  "run_identifier": "real_policy_20261013_215432",
+  "preview_enabled": true,
+  "target_distance_limit_mm": 25,
+  "single_step_limit_mm": 3,
+  "rate_limited_policy": false,
+  "first_target": [
+    428.18585205078125,
+    -147.83816528320312,
+    296.5914306640625,
+    163.34861755371094,
+    12.73038387298584,
+    -91.85177612304688
+  ],
+  "actual_initial_tcp_pose": [
+    430.716,
+    -165.672,
+    296.478,
+    162.63120535890852,
+    12.7824019304711,
+    -91.86507349074152
+  ],
+  "first_target_distance_mm": 18.012778127388206,
+  "first_target_angle_deg": 0.7194184842936507,
+  "setup": {
+    "type": "execute_setup",
+    "host_unix_ns": 1791899716862804700,
+    "ready": false,
+    "reason": "SafetyStop: policy action jump too large: 18.01 mm, 0.72 deg",
+    "motors_enabled": false
+  },
+  "motion_enable_called_by_this_run": false,
+  "raw_log_sha256": "20258347576a722423381ce2af7f2f1e3b49ad651d5b30dafed92085f9a03928",
+  "sensor_ages_seconds": {
+    "rgb": 0.01600000000325963,
+    "ultrasound": 0.0319032
+  },
+  "status": "stopped_before_motion_enable",
+  "scope": "按用户授权尝试 EXECUTE 100 秒；未运行影子循环，未实际运动；保护检查未通过"
+}

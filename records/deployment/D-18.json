@@ -1,0 +1,28 @@
+{
+  "experiment_id": "D-18",
+  "date": "2026-10-13",
+  "scope": "D-17 日志离线复核；非新的真机测试",
+  "source_run": "real_policy_20261013_204352",
+  "pose_assumption": "使用首条实际位姿；记录位置不变",
+  "max_distance_reconstruction_error_mm": 0.0,
+  "results": {
+    "12": {
+      "passed": 3,
+      "rejected": 390,
+      "reasons": {
+        "policy target too far from actual TCP": 390
+      }
+    },
+    "25": {
+      "passed": 38,
+      "rejected": 355,
+      "reasons": {
+        "policy action jump too large": 66,
+        "policy target too far from actual TCP": 289
+      }
+    }
+  },
+  "single_step_limit_mm": 3,
+  "angular_tracking_limit_deg": 5,
+  "motion_commands_sent": 0
+}

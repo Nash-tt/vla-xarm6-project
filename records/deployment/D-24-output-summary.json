@@ -1,0 +1,56 @@
+{
+  "observation_count": 32,
+  "consumed_action_count": 750,
+  "source_sha256": "4f0f4b45cc4f5f32a03dccbddbdeac6788ad83b0894cfaa193a9edcc824d0897",
+  "raw_actual_distance_mm": {
+    "mean": 21.577373014982903,
+    "p95": 34.61796208650496,
+    "min": 0.8984487978462717,
+    "max": 37.22490655609474
+  },
+  "command_actual_distance_mm": {
+    "mean": 0.13369027181281848,
+    "p95": 0.1337896926637075,
+    "min": 0.1327782834489765,
+    "max": 0.2669165204663552
+  },
+  "raw_command_distance_mm": {
+    "mean": 21.44368332119038,
+    "p95": 34.484414445159366,
+    "min": 0.7651154645129337,
+    "max": 37.0920709754099
+  },
+  "raw_action_ranges": {
+    "x_mm": {
+      "min": 430.7164306640625,
+      "max": 430.7192687988281
+    },
+    "y_mm": {
+      "min": -176.7655792236328,
+      "max": -46.272518157958984
+    },
+    "z_mm": {
+      "min": 279.9250793457031,
+      "max": 309.28009033203125
+    },
+    "roll_deg": {
+      "min": 162.67127990722656,
+      "max": 162.7772216796875
+    },
+    "pitch_deg": {
+      "min": 8.842570304870605,
+      "max": 11.601855278015137
+    },
+    "yaw_deg": {
+      "min": -91.85517883300781,
+      "max": -91.8280258178711
+    }
+  },
+  "limitations": [
+    "only consumed/logged predictions; replaced or discarded chunk outputs not captured",
+    "generating observation id and chunk receive range not logged; no reliable observation-action join",
+    "raw_action is restored absolute target, not normalized latent delta",
+    "actual_before_command is pre-send state, not post-command steady-state tracking"
+  ],
+  "experiment_id": "D-24-output-summary"
+}

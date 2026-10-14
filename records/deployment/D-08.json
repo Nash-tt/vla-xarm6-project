@@ -1,0 +1,51 @@
+{
+  "policy_type": "smolvla",
+  "checkpoint_step": "020000",
+  "dataset_repo_id": "local/vla_batch_20261007_pi0_6d_rollunwrap_scan",
+  "frame": 0,
+  "task": "Follow the fitted scan trajectory with the ultrasound probe.",
+  "input_shapes": {
+    "observation.images.rgb": [
+      3,
+      720,
+      1280
+    ],
+    "observation.images.ultrasound": [
+      3,
+      256,
+      256
+    ]
+  },
+  "output_shape": [
+    1,
+    50,
+    6
+  ],
+  "finite": true,
+  "inference_seconds": [
+    0.5951775059802458,
+    0.21737393800867721,
+    0.2173523959936574
+  ],
+  "first_target": [
+    423.5426940917969,
+    -226.17999267578125,
+    270.63861083984375,
+    164.2162628173828,
+    16.693710327148438,
+    -92.2178726196289
+  ],
+  "observed_state": [
+    424.3179931640625,
+    -229.24000549316406,
+    270.5780029296875,
+    164.2397918701172,
+    16.82920265197754,
+    -92.21371459960938
+  ],
+  "cuda_allocated_peak_gib": 0.9086322784423828,
+  "scope": "单帧三次推理；不构成独立评估、网络回放或真机验证",
+  "experiment_id": "D-08",
+  "date": "2026-10-13",
+  "source_sha256": "c67fd007047a812434f0c19d3c617f71a4bee416e57a78191bf6ad2f48381605"
+}

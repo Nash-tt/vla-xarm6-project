@@ -1,0 +1,18 @@
+{
+  "experiment_id": "D-21",
+  "date": "2026-10-14",
+  "policy": "smolvla",
+  "training_experiment": "E-06",
+  "checkpoint_step": 20000,
+  "stage": "readiness_check",
+  "robot_connection": "successful",
+  "ultrasound_packet_age_seconds": 27930.083,
+  "result": "blocked_by_stale_ultrasound",
+  "motion_commands_sent": 0,
+  "planned_execute_seconds": 100,
+  "target_distance_limit_mm": 25,
+  "single_step_limit_mm": 3,
+  "scripts_prepared": true,
+  "shadow_run_performed": false,
+  "execute_run_performed": false
+}

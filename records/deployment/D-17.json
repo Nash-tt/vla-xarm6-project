@@ -1,0 +1,49 @@
+{
+  "experiment_id": "D-17",
+  "date": "2026-10-13",
+  "policy_type": "smolvla",
+  "checkpoint_step": "020000",
+  "mode": "shadow",
+  "preview_enabled": true,
+  "planned_control_seconds": 120,
+  "status": "control_loop_completed",
+  "run_identifier": "real_policy_20261013_204352",
+  "motion_execution_enabled": false,
+  "completed_control_seconds": 120,
+  "processed_actions": 393,
+  "result": "直接目标影子检查未通过；未进行运动",
+  "shadow_valid_actions": 3,
+  "rejected_actions": 390,
+  "motion_commands_sent": 0,
+  "observations_logged": 17,
+  "raw_log_sha256": "f44adf6356d710c8fe972dcce3e03bbffe15a2a4b146bd1fce65d41815ef3147",
+  "observation_rpc_average_seconds": 8.686,
+  "observation_rpc_max_seconds": 21.858,
+  "raw_target_distance_mm": {
+    "first": 15.318198074583043,
+    "minimum": 8.753821765980978,
+    "maximum": 54.01273031440911
+  },
+  "actual_initial_tcp_pose": [
+    430.716,
+    -165.672,
+    296.478,
+    162.63120535890852,
+    12.7824019304711,
+    -91.86507349074152
+  ],
+  "first_policy_target": [
+    428.4546203613281,
+    -150.5374755859375,
+    295.7855224609375,
+    163.4197235107422,
+    12.644889831542969,
+    -91.86845397949219
+  ],
+  "rejection_categories": {
+    "policy target too far from actual TCP": 390,
+    "OK": 3
+  },
+  "exit_code": 0,
+  "task_result": 0
+}

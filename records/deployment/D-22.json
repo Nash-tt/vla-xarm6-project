@@ -1,0 +1,48 @@
+{
+  "experiment_id": "D-22",
+  "date": "2026-10-14",
+  "training_experiment": "E-06",
+  "checkpoint_step": 20000,
+  "policy": "smolvla",
+  "shadow": {
+    "seconds": 30,
+    "actions": 153,
+    "accepted": 44,
+    "rejected": 109,
+    "first_target_distance_mm": 1.340548964769718,
+    "rpc_mean_seconds": 9.164,
+    "rpc_max_seconds": 35.423
+  },
+  "execute": {
+    "requested_seconds": 100,
+    "commands_sent": 50,
+    "all_sdk_return_codes_zero": true,
+    "command_first_to_last_seconds": 3.2757179,
+    "first_target_distance_mm": 1.0164121896512706,
+    "max_precommand_tracking_error_mm": 1.488620325562375,
+    "stop_reason": "action queue empty for 3.063 seconds",
+    "rate_limiter_enabled": false,
+    "target_distance_limit_mm": 25,
+    "single_step_limit_mm": 3,
+    "actual_translation_mm": [
+      0.0009999999999763531,
+      36.04599999999999,
+      8.185999999999979
+    ],
+    "actual_displacement_norm_mm": 36.96382979346159
+  },
+  "final_robot": {
+    "state": 5,
+    "mode": 0,
+    "error_code": 0,
+    "warn_code": 0,
+    "force_norm_n": 15.54357777223005,
+    "torque_norm_nm": 0.790716402851972,
+    "ultrasound_age_s": 0.0160895
+  },
+  "evidence_sha256": {
+    "shadow": "23c6440428282fac4b25d1ee70849c0b002390643c8d54f134d94432ade543da",
+    "execute": "c02d76f69ba02eac10c97b93ba02222d535d726da0f50600f1138a538aa1e82b"
+  },
+  "scope": "Actual bounded motion, not a completed 100-second scan or ultrasound success evaluation"
+}

@@ -1,0 +1,454 @@
+{
+  "experiment_id": "E-08",
+  "scope": "官方公开数据适配、冒烟训练、吞吐对比与内存剖析；未完成正式训练和独立评估",
+  "upstream_repository": "https://github.com/VMVLab/US-VLA",
+  "upstream_commit": "dde576ae9992d33231f3de925ff44a1fc818ab00",
+  "local_changes": "USFM 权重映射与结构兼容修正；实际训练源码哈希见各 run",
+  "dataset": {
+    "id": "usvla/US",
+    "revision": "afa73d512b7a980b55e84536b47ae08c059b0697",
+    "episodes": 120,
+    "frames": 29665,
+    "fps": 30,
+    "independent_validation": false
+  },
+  "gpu": {
+    "name": "NVIDIA RTX 6000D",
+    "memory_total_MiB": 85651,
+    "driver": "580.119.02"
+  },
+  "runs": [
+    {
+      "run_name": "official_6000d_smoke_bs8_E01",
+      "started_at": "2026-10-16T14:20:42.494365+00:00",
+      "configuration": {
+        "batch_size": 8,
+        "num_train_steps": 10,
+        "seed": 42,
+        "num_workers": 2,
+        "model": {
+          "action_dim": 32,
+          "action_horizon": 50,
+          "max_token_len": 200,
+          "dtype": "bfloat16",
+          "paligemma_variant": "gemma_2b_lora",
+          "action_expert_variant": "gemma_300m_lora",
+          "pi05": true,
+          "discrete_state_input": true,
+          "usfm_config": {
+            "enabled": true,
+            "ultrasound_image_key": "right_wrist_0_rgb",
+            "output_dim": 2048,
+            "dtype": "bfloat16"
+          },
+          "fusion_config": {
+            "enabled": true,
+            "hidden_dim": 2048,
+            "num_heads": 8,
+            "out_dim": 1024,
+            "ffn_dim": 4096,
+            "dropout_rate": 0.1,
+            "num_layers": 1,
+            "dtype": "bfloat16"
+          },
+          "pytorch_compile_mode": "max-autotune"
+        },
+        "optimizer": {
+          "b1": 0.9,
+          "b2": 0.95,
+          "eps": 1e-08,
+          "weight_decay": 1e-10,
+          "clip_gradient_norm": 1.0
+        },
+        "lr_schedule": {
+          "warmup_steps": 1000,
+          "peak_lr": 5e-05,
+          "decay_steps": 1000000,
+          "decay_lr": 5e-05
+        },
+        "ema_decay": null,
+        "save_interval": 5000,
+        "keep_period": 10000,
+        "log_interval": 1
+      },
+      "result": {
+        "status": "completed",
+        "completed_steps": 10,
+        "elapsed_seconds_including_initialization_and_checkpoint": 296.26138862699736,
+        "finished_at": "2026-10-16T14:25:38.762295+00:00",
+        "sampled_peak_memory_MiB": 33387,
+        "smoke_checkpoint_removed_for_disk_space": true
+      },
+      "packages": {
+        "jax": "0.5.3",
+        "jaxlib": "0.5.3",
+        "flax": "0.10.2",
+        "torch": "2.7.1",
+        "numpy": "1.26.4",
+        "orbax-checkpoint": "0.11.13"
+      },
+      "source_sha256": {
+        "src/openpi/models/usfm_encoder.py": "f32054acd31bd180747a4fff61b6be8b91c55456624c6545be887315e26c364e",
+        "src/openpi/models/pi0.py": "61fb07ea6746a29c5152afe88e29fa7d6e54c11f9000f88c0b8c455fd3963495",
+        "src/openpi/models/ultrasound_fusion.py": "b0d271e5c8471d9887285b257f2849488f8040d43344fbe8d840feea96db0f59",
+        "src/openpi/training/config.py": "ab4a6945ec6a42bf6f7309935eab51844eb6338e946a8835ebba9c285110bf6e",
+        "src/openpi/training/weight_loaders.py": "03c42d1dd8a91e50af3703392725b7d373a8398b2a3b19bd6e4f4615888c6097",
+        "scripts/train.py": "22f98a06aaa6e68e0f725d727ab95398238d1cae8a46bb94e829f330758a9baf"
+      },
+      "evidence": [
+        {
+          "name": "resolved_config.json",
+          "sha256": "99d155cd82335038d8ebb05b72c0bb25c3f658ba9f4056f776075d22ea2ea01f"
+        },
+        {
+          "name": "result.json",
+          "sha256": "68464ef54c847c3e2ce91410e40453b298e14318b756d508610c8d46ef315d16"
+        },
+        {
+          "name": "train.log",
+          "sha256": "08ec86ad5b4f12ded75ced17892c9b189304aed96570ed98bd97a2d8543d1940"
+        }
+      ]
+    },
+    {
+      "run_name": "official_6000d_public_E01",
+      "started_at": "2026-10-16T14:26:59.850484+00:00",
+      "configuration": {
+        "batch_size": 8,
+        "num_train_steps": 30000,
+        "seed": 42,
+        "num_workers": 2,
+        "model": {
+          "action_dim": 32,
+          "action_horizon": 50,
+          "max_token_len": 200,
+          "dtype": "bfloat16",
+          "paligemma_variant": "gemma_2b_lora",
+          "action_expert_variant": "gemma_300m_lora",
+          "pi05": true,
+          "discrete_state_input": true,
+          "usfm_config": {
+            "enabled": true,
+            "ultrasound_image_key": "right_wrist_0_rgb",
+            "output_dim": 2048,
+            "dtype": "bfloat16"
+          },
+          "fusion_config": {
+            "enabled": true,
+            "hidden_dim": 2048,
+            "num_heads": 8,
+            "out_dim": 1024,
+            "ffn_dim": 4096,
+            "dropout_rate": 0.1,
+            "num_layers": 1,
+            "dtype": "bfloat16"
+          },
+          "pytorch_compile_mode": "max-autotune"
+        },
+        "optimizer": {
+          "b1": 0.9,
+          "b2": 0.95,
+          "eps": 1e-08,
+          "weight_decay": 1e-10,
+          "clip_gradient_norm": 1.0
+        },
+        "lr_schedule": {
+          "warmup_steps": 1000,
+          "peak_lr": 5e-05,
+          "decay_steps": 1000000,
+          "decay_lr": 5e-05
+        },
+        "ema_decay": null,
+        "save_interval": 5000,
+        "keep_period": null,
+        "log_interval": 100
+      },
+      "result": {
+        "status": "stopped_by_user",
+        "completed_steps": null,
+        "last_logged_progress_steps": 988,
+        "resumable_checkpoint": false,
+        "stopped_at": "2026-10-16T14:40:01.888347+00:00"
+      },
+      "packages": {
+        "jax": "0.5.3",
+        "jaxlib": "0.5.3",
+        "flax": "0.10.2",
+        "torch": "2.7.1",
+        "numpy": "1.26.4",
+        "orbax-checkpoint": "0.11.13"
+      },
+      "source_sha256": {
+        "src/openpi/models/usfm_encoder.py": "f32054acd31bd180747a4fff61b6be8b91c55456624c6545be887315e26c364e",
+        "src/openpi/models/pi0.py": "61fb07ea6746a29c5152afe88e29fa7d6e54c11f9000f88c0b8c455fd3963495",
+        "src/openpi/models/ultrasound_fusion.py": "b0d271e5c8471d9887285b257f2849488f8040d43344fbe8d840feea96db0f59",
+        "src/openpi/training/config.py": "ab4a6945ec6a42bf6f7309935eab51844eb6338e946a8835ebba9c285110bf6e",
+        "src/openpi/training/weight_loaders.py": "03c42d1dd8a91e50af3703392725b7d373a8398b2a3b19bd6e4f4615888c6097",
+        "scripts/train.py": "22f98a06aaa6e68e0f725d727ab95398238d1cae8a46bb94e829f330758a9baf"
+      },
+      "evidence": [
+        {
+          "name": "resolved_config.json",
+          "sha256": "8c5e42ce77147a9f7a75bd815251d4005b6acdf9f2315331ecdf09594b04057e"
+        },
+        {
+          "name": "result.json",
+          "sha256": "ac9cbc2fadf67081cadba6240bf13d729b982e50b79303e4b151aeebcaf4817c"
+        },
+        {
+          "name": "train.log",
+          "sha256": "045f756e8ad1b17c02e3a02b8bcda787c7af70bf75309338d6d451828670859e"
+        },
+        {
+          "name": "throughput_summary.json",
+          "sha256": "dd4d13a3e5a952e985402dd91bc8c70f1b67de17d0213bb8097f7ee7c43728f4"
+        }
+      ],
+      "throughput": {
+        "batch_size": 8,
+        "interval_start_step": 210.0,
+        "interval_end_step": 988.0,
+        "interval_seconds": 556.238,
+        "seconds_per_step": 0.7149588688946016,
+        "samples_per_second": 11.189454873633228,
+        "sampled_peak_memory_MiB": 33377,
+        "estimated_hours_for_240000_samples": 5.9579905741216805
+      }
+    },
+    {
+      "run_name": "official_6000d_smoke_bs16_E01",
+      "started_at": "2026-10-16T14:39:54.454525+00:00",
+      "configuration": {
+        "batch_size": 16,
+        "num_train_steps": 120,
+        "seed": 42,
+        "num_workers": 2,
+        "model": {
+          "action_dim": 32,
+          "action_horizon": 50,
+          "max_token_len": 200,
+          "dtype": "bfloat16",
+          "paligemma_variant": "gemma_2b_lora",
+          "action_expert_variant": "gemma_300m_lora",
+          "pi05": true,
+          "discrete_state_input": true,
+          "usfm_config": {
+            "enabled": true,
+            "ultrasound_image_key": "right_wrist_0_rgb",
+            "output_dim": 2048,
+            "dtype": "bfloat16"
+          },
+          "fusion_config": {
+            "enabled": true,
+            "hidden_dim": 2048,
+            "num_heads": 8,
+            "out_dim": 1024,
+            "ffn_dim": 4096,
+            "dropout_rate": 0.1,
+            "num_layers": 1,
+            "dtype": "bfloat16"
+          },
+          "pytorch_compile_mode": "max-autotune"
+        },
+        "optimizer": {
+          "b1": 0.9,
+          "b2": 0.95,
+          "eps": 1e-08,
+          "weight_decay": 1e-10,
+          "clip_gradient_norm": 1.0
+        },
+        "lr_schedule": {
+          "warmup_steps": 1000,
+          "peak_lr": 5e-05,
+          "decay_steps": 1000000,
+          "decay_lr": 5e-05
+        },
+        "ema_decay": null,
+        "save_interval": 5000,
+        "keep_period": null,
+        "log_interval": 10
+      },
+      "result": {
+        "status": "completed",
+        "completed_steps": 120,
+        "elapsed_seconds_including_initialization_and_checkpoint": 393.1050163820619,
+        "finished_at": "2026-10-16T14:46:27.565517+00:00"
+      },
+      "packages": {
+        "jax": "0.5.3",
+        "jaxlib": "0.5.3",
+        "flax": "0.10.2",
+        "torch": "2.7.1",
+        "numpy": "1.26.4",
+        "orbax-checkpoint": "0.11.13"
+      },
+      "source_sha256": {
+        "src/openpi/models/usfm_encoder.py": "f32054acd31bd180747a4fff61b6be8b91c55456624c6545be887315e26c364e",
+        "src/openpi/models/pi0.py": "61fb07ea6746a29c5152afe88e29fa7d6e54c11f9000f88c0b8c455fd3963495",
+        "src/openpi/models/ultrasound_fusion.py": "b0d271e5c8471d9887285b257f2849488f8040d43344fbe8d840feea96db0f59",
+        "src/openpi/training/config.py": "ab4a6945ec6a42bf6f7309935eab51844eb6338e946a8835ebba9c285110bf6e",
+        "src/openpi/training/weight_loaders.py": "03c42d1dd8a91e50af3703392725b7d373a8398b2a3b19bd6e4f4615888c6097",
+        "scripts/train.py": "22f98a06aaa6e68e0f725d727ab95398238d1cae8a46bb94e829f330758a9baf"
+      },
+      "evidence": [
+        {
+          "name": "resolved_config.json",
+          "sha256": "8ffc414ea828645ab3c6f497e9afb8ed50f3b03455f57593899c110cc2f49560"
+        },
+        {
+          "name": "result.json",
+          "sha256": "4a29d0d99535bc41f2abb9a2e9052c847e02f290c65ed4359f7d2014c865111f"
+        },
+        {
+          "name": "train.log",
+          "sha256": "99cf58416560053aa3050e66fa8057e238f7e8eb413eef21a8af6075e8bfd48b"
+        },
+        {
+          "name": "throughput_summary.json",
+          "sha256": "bb25856a9d56bb4daa3ffaf8e8dae67664d7fd0dff9b962975183c6c01df33f9"
+        }
+      ],
+      "throughput": {
+        "batch_size": 16,
+        "interval_start_step": 30.0,
+        "interval_end_step": 116.0,
+        "interval_seconds": 126.248,
+        "seconds_per_step": 1.468,
+        "samples_per_second": 10.899182561307901,
+        "sampled_peak_memory_MiB": 33419,
+        "estimated_hours_for_240000_samples": 6.116666666666666
+      }
+    }
+  ],
+  "memory_profiles": [
+    {
+      "batch_size": 8,
+      "status": "completed",
+      "parameter_bytes_by_module": {
+        "PaliGemma/img": 1659214784,
+        "PaliGemma/llm": 6072879104,
+        "action_in_proj": 135168,
+        "action_out_proj": 131200,
+        "time_mlp_in": 4198400,
+        "time_mlp_out": 4198400,
+        "ultrasound_fusion": 142733312,
+        "usfm_encoder": 348961088
+      },
+      "trainable_parameter_bytes": 2359522688,
+      "frozen_parameter_bytes": 5872928768,
+      "optimizer_state_bytes": 4719045384,
+      "total_train_state_bytes": 12951496844,
+      "batch_bytes": 14510936,
+      "ema_bytes": 0,
+      "compiled_memory_analysis": {
+        "alias_size_in_bytes": 0,
+        "argument_size_in_bytes": 12966006756,
+        "generated_code_size_in_bytes": 7769848,
+        "host_alias_size_in_bytes": 0,
+        "host_argument_size_in_bytes": 0,
+        "host_generated_code_size_in_bytes": 0,
+        "host_output_size_in_bytes": 0,
+        "host_temp_size_in_bytes": 0,
+        "output_size_in_bytes": 12951503328,
+        "temp_size_in_bytes": 5003468952
+      },
+      "synchronized_step_seconds": [
+        1.0402577240020037,
+        0.7170025259256363,
+        0.717740832013078,
+        0.7160897699650377,
+        0.7160390539793298
+      ],
+      "last_metrics": {
+        "grad_norm": 1.6836767196655273,
+        "loss": 0.11231330037117004,
+        "param_norm": 1853.0211181640625
+      },
+      "allocator_after_step5": {
+        "num_allocs": 995,
+        "bytes_in_use": 13152759808,
+        "peak_bytes_in_use": 18156236288,
+        "largest_alloc_size": 5003469056,
+        "bytes_limit": 66878423040,
+        "bytes_reserved": 0,
+        "peak_bytes_reserved": 0,
+        "largest_free_block_bytes": 0,
+        "pool_bytes": 34391195648,
+        "peak_pool_bytes": 34391195648
+      },
+      "live_array_bytes_after_step5": 12966007820,
+      "evidence": {
+        "name": "memory_report.json",
+        "sha256": "05dd5229ceb9e958d4c307007867f54f95a566959d2770d6ba757a4ee46503c2"
+      }
+    },
+    {
+      "batch_size": 16,
+      "status": "completed",
+      "parameter_bytes_by_module": {
+        "PaliGemma/img": 1659214784,
+        "PaliGemma/llm": 6072879104,
+        "action_in_proj": 135168,
+        "action_out_proj": 131200,
+        "time_mlp_in": 4198400,
+        "time_mlp_out": 4198400,
+        "ultrasound_fusion": 142733312,
+        "usfm_encoder": 348961088
+      },
+      "trainable_parameter_bytes": 2359522688,
+      "frozen_parameter_bytes": 5872928768,
+      "optimizer_state_bytes": 4719045384,
+      "total_train_state_bytes": 12951496844,
+      "batch_bytes": 29021872,
+      "ema_bytes": 0,
+      "compiled_memory_analysis": {
+        "alias_size_in_bytes": 0,
+        "argument_size_in_bytes": 12980516660,
+        "generated_code_size_in_bytes": 7787920,
+        "host_alias_size_in_bytes": 0,
+        "host_argument_size_in_bytes": 0,
+        "host_generated_code_size_in_bytes": 0,
+        "host_output_size_in_bytes": 0,
+        "host_temp_size_in_bytes": 0,
+        "output_size_in_bytes": 12951503328,
+        "temp_size_in_bytes": 6308334360
+      },
+      "synchronized_step_seconds": [
+        1.7935211500152946,
+        1.4708420899696648,
+        1.471017072093673,
+        1.4695083679398522,
+        1.4686210099607706
+      ],
+      "last_metrics": {
+        "grad_norm": 1.8452388048171997,
+        "loss": 0.10630406439304352,
+        "param_norm": 1853.0211181640625
+      },
+      "allocator_after_step5": {
+        "num_allocs": 995,
+        "bytes_in_use": 13194753792,
+        "peak_bytes_in_use": 19503095808,
+        "largest_alloc_size": 6308334592,
+        "bytes_limit": 66878423040,
+        "bytes_reserved": 0,
+        "peak_bytes_reserved": 0,
+        "largest_free_block_bytes": 0,
+        "pool_bytes": 34424750080,
+        "peak_pool_bytes": 34424750080
+      },
+      "live_array_bytes_after_step5": 12980518756,
+      "evidence": {
+        "name": "memory_report.json",
+        "sha256": "0d4c117b783103084e7e87d3ab61700348f3b3e90b6acd4d7e29df60c44e951c"
+      }
+    }
+  ],
+  "limits": [
+    "最后日志进度不代表精确终止更新数",
+    "未保存的正式训练不可恢复",
+    "nvidia-smi 进程占用、allocator 缓冲峰值和显存池容量不是同一指标",
+    "未在 RTX 5090 实测；未证明完整训练最低显存",
+    "无独立评估或论文指标复现结论"
+  ]
+}

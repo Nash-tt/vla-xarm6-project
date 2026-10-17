@@ -1,0 +1,84 @@
+{
+  "total_parameters": 3288036112,
+  "trainable_parameters_by_checkpoint_shapes_and_config": 468039440,
+  "trainable_percent": 14.234619817338551,
+  "groups": {
+    "vision": 414803696,
+    "frozen_llm": 2819996672,
+    "lora_llm": 49987584,
+    "projections": 3248160
+  },
+  "lora": {
+    "paligemma": {
+      "rank": 16,
+      "alpha": 16,
+      "scaling": 1,
+      "layers": 18,
+      "parameters": 27869184
+    },
+    "action_expert": {
+      "rank": 32,
+      "alpha": 32,
+      "scaling": 1,
+      "layers": 18,
+      "parameters": 22118400
+    },
+    "targets": [
+      "attention q_einsum",
+      "attention kv_einsum",
+      "attention attn_vec_einsum",
+      "ffn gating_einsum",
+      "ffn linear"
+    ],
+    "rslora": false,
+    "dropout": "not present in this LoRA implementation"
+  },
+  "full_trainable_projections": [
+    "state_proj",
+    "action_in_proj",
+    "action_out_proj",
+    "action_time_mlp_in",
+    "action_time_mlp_out"
+  ],
+  "vision_full_trainable": true,
+  "experiment_id": "E-07-comparison-baseline",
+  "dataset": {
+    "id": "vla_batch_20261007_pi0_6d_rollunwrap_scan_v21",
+    "frames": 27312,
+    "episodes": 28,
+    "fps": 15
+  },
+  "batch_size": 32,
+  "completed_updates": 10000,
+  "status": "completed",
+  "checkpoint": "9999",
+  "total_seconds": 38391,
+  "training_loop_seconds": 38256,
+  "last_logged_loss": {
+    "step": 9900,
+    "loss": 0.0419
+  },
+  "historical_memory_test": {
+    "batch_size": 32,
+    "peak_bytes_in_use_GiB": 21.44,
+    "is_formal_run_peak": false,
+    "hardware_reverified": false,
+    "historical_gpu_name": "RTX 4090",
+    "historical_memory_total_MiB": 49140
+  },
+  "evidence": [
+    {
+      "name": "E-07-parameters.json",
+      "sha256": "93e4e674a1977c5bb6a6fe52bbde4d114a676070d910ac11473254d3cc852dc8"
+    },
+    {
+      "name": "train_bs32_10k_20261014_2258.log",
+      "sha256": "a50bab50c74fa28d38004699b9db9f2bbeee0de18d300c895a6a293546ed198f"
+    }
+  ],
+  "limits": [
+    "正式运行设置预分配比例0.95，但全程峰值未记录",
+    "硬件型号与容量组合仅为历史记录",
+    "真机完成动作预算不代表超声任务成功率"
+  ]
+}

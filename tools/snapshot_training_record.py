@@ -22,7 +22,15 @@ def main():
     parser.add_argument('--log', type=Path)
     parser.add_argument('--id', required=True)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--format', choices=('lerobot', 'usvla'), default='lerobot',
+                        help='usvla 模式的 --run 指向 reproduction/experiments')
     args = parser.parse_args()
+    if args.format == 'usvla':
+        from snapshot_usvla_record import snapshot
+        result = snapshot(args.run, args.id)
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(json.dumps(result, indent=2, ensure_ascii=False) + '\n')
+        return
     # 不用 last：它可能指向旧恢复点。优先选最大的数字 checkpoint。
     configs = list(args.run.glob('checkpoints/[0-9]*/pretrained_model/train_config.json'))
     configs = [p for p in configs if p.parent.parent.name.isdigit()]
